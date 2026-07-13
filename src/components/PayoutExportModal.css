@@ -1,0 +1,246 @@
+.payout-export-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+}
+
+.payout-export-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 900px;
+  max-width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.payout-export-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e6e9f0;
+  flex-shrink: 0;
+}
+
+.payout-export-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a2332;
+}
+
+.payout-export-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.payout-export-close:hover {
+  background: #f1f3f6;
+  color: #333;
+}
+
+.payout-export-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Custom Data long dropdown trigger */
+.custom-data-dropdown {
+  position: relative;
+}
+
+.custom-data-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border: 1.5px solid #17c997;
+  border-radius: 8px;
+  background: #f0fdf9;
+  color: #0f9a72;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.custom-data-trigger:hover {
+  background: #e6f9f3;
+}
+
+.custom-data-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  padding: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.column-group {
+  margin-bottom: 4px;
+}
+
+.column-group-row,
+.column-child-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.column-group-row:hover,
+.column-child-row:hover {
+  background: #f7f8fa;
+}
+
+.column-group-row {
+  font-weight: 700;
+  color: #1a2332;
+}
+
+.column-child-row {
+  margin-left: 26px;
+  color: #444;
+}
+
+.column-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #17c997;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Preview table */
+.payout-preview-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e6e9f0;
+  border-radius: 10px;
+}
+
+.payout-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.payout-preview-table th {
+  background: #fafbfc;
+  border-bottom: 1px solid #e6e9f0;
+  border-right: 1px solid #eef0f4;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 700;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+
+.payout-preview-table th.group-header {
+  text-align: center;
+  color: #17c997;
+  background: #f0fdf9;
+}
+
+.payout-preview-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f3f6;
+  border-right: 1px solid #f6f7f9;
+  color: #333;
+}
+
+.payout-preview-empty {
+  padding: 24px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.payout-preview-note {
+  font-size: 11px;
+  color: #999;
+  text-align: right;
+}
+
+.payout-export-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #e6e9f0;
+  flex-shrink: 0;
+}
+
+.payout-export-cancel-btn {
+  padding: 10px 20px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.payout-export-cancel-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.payout-export-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #17c997;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.payout-export-download-btn:hover {
+  background: #14b88a;
+}
+
+.payout-export-download-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}

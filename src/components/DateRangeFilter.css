@@ -1,0 +1,226 @@
+.date-range-filter {
+  display: flex;
+  align-items: center;
+}
+
+.filter-button-wrapper {
+  position: relative;
+}
+
+/* ── Trigger button ───────────────────────────────── */
+.date-range-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.date-range-button:hover {
+  border-color: #17c997;
+  background-color: #f9f9f9;
+}
+
+/* ── Dropdown panel ───────────────────────────────── */
+.date-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.13);
+  z-index: 1000;
+  width: 300px;
+  padding: 16px;
+}
+
+/* ── Preset section ───────────────────────────────── */
+.date-dropdown h4 {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #888;
+  margin: 0 0 10px;
+  letter-spacing: 0.6px;
+}
+
+.preset-ranges {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.preset-btn {
+  padding: 9px 12px;
+  background: none;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #555;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.preset-btn:hover {
+  background-color: #f0fdf9;
+  border-color: #17c997;
+  color: #17c997;
+}
+
+.preset-btn.active {
+  background-color: #e6f9f3;
+  border-color: #17c997;
+  color: #17c997;
+  font-weight: 600;
+}
+
+.divider {
+  height: 1px;
+  background-color: #e9ecef;
+  margin: 12px 0;
+}
+
+/* ── Custom section ───────────────────────────────── */
+.custom-date-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pick-hint {
+  font-size: 10px;
+  font-weight: 400;
+  color: #17c997;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+
+/* ── Calendar ─────────────────────────────────────── */
+.calendar {
+  user-select: none;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cal-month-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a2332;
+}
+
+.cal-nav {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.cal-nav:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+/* ── Grid ─────────────────────────────────────────── */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-dow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #aaa;
+  padding: 4px 0 6px;
+}
+
+/* ── Day cells ────────────────────────────────────── */
+.cal-cell {
+  text-align: center;
+  padding: 7px 0;
+  font-size: 13px;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+.cal-cell.empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+.cal-cell:not(.empty):hover {
+  background-color: #e6f9f3;
+  color: #17c997;
+}
+
+/* Today indicator */
+.cal-cell.today:not(.selected) {
+  font-weight: 700;
+  color: #17c997;
+}
+
+/* In-range highlight */
+.cal-cell.in-range {
+  background-color: #d0f4ea;
+  color: #0f9a72;
+  border-radius: 0;
+}
+
+/* Selected endpoints */
+.cal-cell.selected {
+  background-color: #17c997;
+  color: white;
+  font-weight: 600;
+  border-radius: 4px;
+  z-index: 1;
+}
+
+/* Round only the outer edge of each endpoint */
+.cal-cell.selected.range-start {
+  border-radius: 4px 0 0 4px;
+}
+
+.cal-cell.selected.range-end {
+  border-radius: 0 4px 4px 0;
+}
+
+/* When start === end (single-day pick) keep full rounding */
+.cal-cell.selected.range-start.range-end {
+  border-radius: 4px;
+}
+
+/* ── Range label at bottom ────────────────────────── */
+.cal-range-label {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: #555;
+  background: #f0fdf9;
+  border-radius: 5px;
+  padding: 6px 10px;
+}

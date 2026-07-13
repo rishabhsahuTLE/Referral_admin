@@ -1,0 +1,96 @@
+.sort-by {
+  display: flex;
+  align-items: center;
+}
+
+.sort-wrapper {
+  position: relative;
+}
+
+.sort-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.sort-button:hover {
+  border-color: #17c997;
+  background-color: #f9f9f9;
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  margin-top: 8px;
+  min-width: 240px;
+  padding: 8px 0;
+}
+
+.sort-option {
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s;
+}
+
+.sort-option:hover {
+  background-color: #f8f9fa;
+  color: #17c997;
+}
+
+.sort-option.active {
+  background-color: #e6f9f3;
+  color: #17c997;
+  font-weight: 600;
+}
+
+.radio-circle {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.sort-option:hover .radio-circle {
+  border-color: #17c997;
+}
+
+.sort-option.active .radio-circle {
+  border-color: #17c997;
+  background-color: #17c997;
+}
+
+.radio-dot {
+  width: 6px;
+  height: 6px;
+  background-color: white;
+  border-radius: 50%;
+}

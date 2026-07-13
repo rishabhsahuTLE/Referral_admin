@@ -1,0 +1,465 @@
+.referral-payouts {
+  padding: 30px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* ── TOP ROW ─────────────────────────────────────── */
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a2332;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.university-name {
+  font-weight: 600;
+  color: #1a2332;
+}
+
+.header-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.export-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background-color: #17c997;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.export-download-btn:hover {
+  background-color: #14b88a;
+}
+
+/* ── STAT TILES ──────────────────────────────────── */
+.header-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.stat-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* force equal height */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.stat-box label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+}
+
+.stat-amount {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a2332;
+  margin-bottom: 6px;
+  line-height: 1.1;
+}
+
+.stat-box p {
+  font-size: 12px;
+  color: #aaa;
+  margin: 0;
+}
+
+.stat-box.urgent-stat {
+  border-top: 3px solid #ff4444;
+}
+
+/* ── TABS ────────────────────────────────────────── */
+.tabs-container {
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 8px;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.tab {
+  padding: 15px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+/* "All" tab takes 10% of the width */
+.tab.tab-all {
+  width: 10%;
+  flex: none;
+}
+
+/* Each step tab takes 30% of the remaining area (approx 30% of total) */
+.tab.tab-step {
+  flex: 1;
+}
+
+.tab:hover {
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+.tab.active {
+  color: #17c997;
+  border-bottom-color: #17c997;
+}
+
+/* Arrow separators between sequential step tabs */
+.tab-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #bbb;
+  padding: 0 4px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* ── TABLE ───────────────────────────────────────── */
+.table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.data-table th {
+  padding: 15px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.3s;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.data-table tbody tr.urgent-row {
+  background-color: #fff3f3;
+  border-left: 4px solid #ff4444;
+}
+
+.data-table tbody tr.urgent-row:hover {
+  background-color: #ffecec;
+}
+
+.data-table td {
+  padding: 15px;
+  font-size: 14px;
+  color: #333;
+}
+
+.student-name,
+.referrer-name,
+.course-name {
+  font-weight: 500;
+}
+
+.enrolled-date small {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.amount {
+  font-weight: 600;
+  color: #17c997;
+}
+
+.stage-cell {
+  text-align: center;
+}
+
+.stage-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Make stage badges clickable */
+.stage-badge-clickable {
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.stage-badge-clickable:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+.description-cell {
+  text-align: center;
+}
+
+.description-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+}
+
+.expand-btn,
+.flag-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.flag-btn {
+  color: #999;
+}
+
+.flag-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.flag-btn.flagged {
+  color: #ff6b6b;
+  background-color: #ffe0e0;
+}
+
+/* ── MODAL ───────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-popup {
+  background: white;
+  border-radius: 12px;
+  padding: 28px 32px;
+  width: 440px;
+  max-width: 90vw;
+  max-height: 80vh;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a2332;
+  margin: 0 0 16px 0;
+}
+
+.modal-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  color: #333;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.modal-textarea:focus {
+  outline: none;
+  border-color: #17c997;
+  box-shadow: 0 0 0 3px rgba(23, 201, 151, 0.12);
+}
+
+.modal-textarea::placeholder {
+  color: #bbb;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.modal-cancel-btn {
+  padding: 10px 20px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-cancel-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.modal-save-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #ccc;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.modal-save-btn.modal-save-btn-active {
+  background: #17c997;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.modal-save-btn.modal-save-btn-active:hover {
+  background: #14b88a;
+  box-shadow: 0 2px 8px rgba(23, 201, 151, 0.3);
+}
+
+.records-count {
+  text-align: right;
+  font-size: 12px;
+  color: #999;
+  margin-top: 15px;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 1100px) {
+  .header-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .header-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .tab.tab-all {
+    width: auto;
+  }
+
+  .tab-arrow {
+    display: none;
+  }
+}
