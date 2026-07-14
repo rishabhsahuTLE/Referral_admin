@@ -24,7 +24,7 @@ function GroupCheckbox({ checked, indeterminate, onChange }) {
   );
 }
 
-function PayoutExportModal({ isOpen, onClose, records, calculateDaysAgo }) {
+function PayoutExportModal({ isOpen, onClose, records }) {
   const [selectedKeys, setSelectedKeys] = useState(() => new Set(ALL_LEAF_KEYS));
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef(null);
@@ -41,8 +41,8 @@ function PayoutExportModal({ isOpen, onClose, records, calculateDaysAgo }) {
   }, [panelOpen]);
 
   const exportRows = useMemo(
-    () => records.map((r) => buildExportRow(r, calculateDaysAgo)),
-    [records, calculateDaysAgo]
+    () => records.map((r) => buildExportRow(r)),
+    [records]
   );
 
   if (!isOpen) return null;

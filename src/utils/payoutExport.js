@@ -4,8 +4,10 @@
 
 export const PAYOUT_COLUMN_GROUPS = [
   {
+    // Sourced from item.student/item.course/item.studentId — the enrolled/referred
+    // person, called "Referee" in the main table.
     key: 'student',
-    label: 'Student Details',
+    label: 'Referee Details',
     children: [
       { key: 'student.name', label: 'Name' },
       { key: 'student.course', label: 'Course' },
@@ -13,6 +15,8 @@ export const PAYOUT_COLUMN_GROUPS = [
     ],
   },
   {
+    // Sourced from item.referrer/item.referrerCourse/item.referrerId — the person
+    // who gets paid, called "Student" in the main table. Label unchanged.
     key: 'referrer',
     label: 'Referrer Details',
     children: [
@@ -56,27 +60,28 @@ export function getAllLeafKeys() {
   return PAYOUT_COLUMN_GROUPS.flatMap(getGroupLeafKeys);
 }
 
-// Stage a record is blocked on — everything strictly before this stage is already complete.
-const STAGE_ORDER = ['Doc Verification', 'Bank Verification', 'Payment Pending'];
-
-// Small rotating pool of staff so each record gets a plausible-but-deterministic point of contact.
-const POC_POOL = [
+// Small rotating pool of staff so each record gets a plausible-but-deterministic counsellor.
+// (Only the counsellor — doc/bank/payment POCs now come from real stageHistory data, since
+// those are captured for real when an admin advances a record through the stage popup.)
+const COUNSELLOR_POOL = [
   { name: 'Ravi Sharma', phone: '+91 98111 22334' },
   { name: 'Meena Pillai', phone: '+91 98222 33445' },
   { name: 'Suresh Nair', phone: '+91 98333 44556' },
   { name: 'Anita Rao', phone: '+91 98444 55667' },
 ];
 
-function getPOC(id, offset) {
-  const poc = POC_POOL[(id + offset) % POC_POOL.length];
+function getCounsellorPOC(id) {
+  const poc = COUNSELLOR_POOL[id % COUNSELLOR_POOL.length];
   return `${poc.name} (${poc.phone})`;
 }
 
-// Builds a flat { columnKey: displayValue } row for one payout record, given a way to
-// format "N days ago" into a date string (the caller already has calculateDaysAgo).
-export function buildExportRow(item, calculateDaysAgo) {
-  const stageIdx = STAGE_ORDER.indexOf(item.stage);
-  const reached = (idx) => stageIdx > idx;
+const dateOf = (entry) => (entry ? entry.date : '-');
+const pocOf = (entry) => (entry ? `${entry.pocName} (${entry.pocPhone})` : '-');
+
+// Builds a flat { columnKey: displayValue } row for one payout record, sourcing doc/bank/payment
+// dates and POC info from the record's real stageHistory (captured via the stage-advance popup).
+export function buildExportRow(item) {
+  const h = item.stageHistory || {};
 
   return {
     'student.name': item.student,
@@ -86,13 +91,13 @@ export function buildExportRow(item, calculateDaysAgo) {
     'referrer.course': item.referrerCourse,
     'referrer.id': item.referrerId,
     'date.enrolledOn': item.enrolledDate,
-    'date.docVerification': reached(0) ? calculateDaysAgo(Math.max(item.daysAgo - 4, 0)) : '-',
-    'date.bankVerification': reached(1) ? calculateDaysAgo(Math.max(item.daysAgo - 9, 0)) : '-',
-    'date.payment': reached(2) ? calculateDaysAgo(Math.max(item.daysAgo - 14, 0)) : '-',
-    'poc.counsellor': getPOC(item.id, 0),
-    'poc.docVerification': reached(0) ? getPOC(item.id, 1) : '-',
-    'poc.bankVerification': reached(1) ? getPOC(item.id, 2) : '-',
-    'poc.payment': reached(2) ? getPOC(item.id, 3) : '-',
+    'date.docVerification': dateOf(h.docVerification),
+    'date.bankVerification': dateOf(h.bankVerification),
+    'date.payment': dateOf(h.payment),
+    'poc.counsellor': getCounsellorPOC(item.id),
+    'poc.docVerification': pocOf(h.docVerification),
+    'poc.bankVerification': pocOf(h.bankVerification),
+    'poc.payment': pocOf(h.payment),
     amount: item.amount,
   };
 }

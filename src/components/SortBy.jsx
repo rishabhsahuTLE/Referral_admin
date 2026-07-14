@@ -14,7 +14,7 @@ function SortBy({ onSortChange }) {
     { value: 'name-asc', label: 'Student Name (A-Z)' },
     { value: 'name-desc', label: 'Student Name (Z-A)' },
     { value: 'stage', label: 'Stage' },
-    { value: 'urgent', label: 'Urgent First' },
+    { value: 'flagged', label: 'Flagged First' },
   ];
 
   const handleSortSelect = (value) => {

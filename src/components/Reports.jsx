@@ -599,12 +599,14 @@ export default function Reports({ data }) {
           >
             Referee Report
           </div>
-          <div 
+          {/* Attribution Audit temporarily disabled
+          <div
             className={`inner-tab ${activeSubTab === "attribution_audit" ? "active" : ""}`}
             onClick={() => setActiveSubTab("attribution_audit")}
           >
             Attribution Audit <span className="inner-tab-badge">1</span>
           </div>
+          */}
           <div 
             className={`inner-tab ${activeSubTab === "visual_charts" ? "active" : ""}`}
             onClick={() => setActiveSubTab("visual_charts")}
@@ -929,7 +931,10 @@ export default function Reports({ data }) {
         </>
       )}
 
-      {activeSubTab === "attribution_audit" && (() => {
+      {/* Attribution Audit temporarily disabled — guarded with `false &&` instead of a JSX
+          comment since this block contains its own inline `{/* ... *\/}` comments, which
+          would otherwise prematurely close an outer JSX comment wrap. */}
+      {false && activeSubTab === "attribution_audit" && (() => {
         const auditRows = [
           { student: "Rahul Sharma",  origCourse: "B.Tech CSE",     newCourse: "B.Tech AI/ML",   referring: "Aditya Verma",  date: "10 Jun 2026", status: "Preserved" },
           { student: "Priya Mehta",   origCourse: "MBA Marketing",   newCourse: "MBA Finance",    referring: "Pradeep Nair",  date: "05 Jun 2026", status: "Preserved" },
