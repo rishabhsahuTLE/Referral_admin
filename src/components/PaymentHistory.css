@@ -116,7 +116,7 @@
 
 .amount {
   font-weight: 600;
-  color: #17c997;
+  color: var(--primary);
 }
 
 .reference {

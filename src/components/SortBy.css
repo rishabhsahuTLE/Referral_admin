@@ -23,7 +23,7 @@
 }
 
 .sort-button:hover {
-  border-color: #17c997;
+  border-color: var(--primary);
   background-color: #f9f9f9;
 }
 
@@ -58,12 +58,12 @@
 
 .sort-option:hover {
   background-color: #f8f9fa;
-  color: #17c997;
+  color: var(--primary);
 }
 
 .sort-option.active {
-  background-color: #e6f9f3;
-  color: #17c997;
+  background-color: var(--primary-light);
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -80,12 +80,12 @@
 }
 
 .sort-option:hover .radio-circle {
-  border-color: #17c997;
+  border-color: var(--primary);
 }
 
 .sort-option.active .radio-circle {
-  border-color: #17c997;
-  background-color: #17c997;
+  border-color: var(--primary);
+  background-color: var(--primary);
 }
 
 .radio-dot {

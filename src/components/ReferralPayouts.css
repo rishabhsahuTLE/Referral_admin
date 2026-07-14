@@ -39,7 +39,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  background-color: #17c997;
+  background-color: var(--primary);
   border: none;
   border-radius: 6px;
   color: white;
@@ -51,7 +51,7 @@
 }
 
 .export-download-btn:hover {
-  background-color: #14b88a;
+  background-color: var(--primary-hover);
 }
 
 /* ── STAT TILES ──────────────────────────────────── */
@@ -151,8 +151,8 @@
 }
 
 .tab.active {
-  color: #17c997;
-  border-bottom-color: #17c997;
+  color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 
 /* Arrow separators between sequential step tabs */
@@ -235,16 +235,25 @@
 
 .amount {
   font-weight: 600;
-  color: #17c997;
+  color: var(--primary);
 }
 
 .stage-cell {
   text-align: center;
 }
 
+/* Fixed layout so every row's badge lands in the same horizontal position,
+   whether or not that row has a flag/note to show alongside it. */
+.stage-cell-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .stage-badge {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -263,17 +272,19 @@
   transform: scale(1.05);
 }
 
-.stage-flag-indicators {
-  position: relative;
+/* Reserved width — present on every row so the badge never shifts depending
+   on whether this particular row happens to be flagged. */
+.stage-flag-slot {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: 8px;
-  vertical-align: middle;
+  width: 44px;
+  flex-shrink: 0;
 }
 
 .stage-flag-icon {
   color: #ff4444;
+  flex-shrink: 0;
 }
 
 .stage-note-btn {
@@ -287,17 +298,17 @@
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s;
+  flex-shrink: 0;
 }
 
 .stage-note-btn:hover {
   background-color: #f0f0f0;
 }
 
+/* Rendered via a portal to document.body (positioned with inline top/left)
+   so it can never be clipped by the table container's overflow:hidden. */
 .stage-note-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
   width: 240px;
   background: #1a2332;
   color: #fff;
@@ -308,7 +319,7 @@
   padding: 10px 12px;
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  z-index: 50;
+  z-index: 2000;
   white-space: normal;
 }
 

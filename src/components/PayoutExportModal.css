@@ -76,10 +76,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px;
-  border: 1.5px solid #17c997;
+  border: 1.5px solid var(--primary);
   border-radius: 8px;
-  background: #f0fdf9;
-  color: #0f9a72;
+  background: var(--primary-light);
+  color: var(--primary-hover);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -87,7 +87,7 @@
 }
 
 .custom-data-trigger:hover {
-  background: #e6f9f3;
+  background: #e4e1fc;
 }
 
 .custom-data-panel {
@@ -138,7 +138,7 @@
 .column-checkbox {
   width: 16px;
   height: 16px;
-  accent-color: #17c997;
+  accent-color: var(--primary);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -172,8 +172,8 @@
 
 .payout-preview-table th.group-header {
   text-align: center;
-  color: #17c997;
-  background: #f0fdf9;
+  color: var(--primary-hover);
+  background: var(--primary-light);
 }
 
 .payout-preview-table td {
@@ -228,7 +228,7 @@
   padding: 10px 24px;
   border: none;
   border-radius: 8px;
-  background: #17c997;
+  background: var(--primary);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
@@ -237,7 +237,7 @@
 }
 
 .payout-export-download-btn:hover {
-  background: #14b88a;
+  background: var(--primary-hover);
 }
 
 .payout-export-download-btn:disabled {

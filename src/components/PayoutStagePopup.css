@@ -95,14 +95,14 @@
 
 .payout-stage-step.next {
   color: #1a2332;
-  border-color: #17c997;
+  border-color: var(--primary);
   background: #ffffff;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .payout-stage-step.next:hover {
-  background: #f0fdf9;
+  background: var(--primary-light);
 }
 
 .payout-stage-step.locked {
@@ -186,7 +186,7 @@
 }
 
 .payout-stage-input:focus {
-  border-color: #17c997;
+  border-color: var(--primary);
 }
 
 .payout-stage-input-readonly {
@@ -233,7 +233,7 @@
   padding: 8px 18px;
   border: none;
   border-radius: 8px;
-  background: #17c997;
+  background: var(--primary);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -242,7 +242,7 @@
 }
 
 .payout-stage-confirm-btn:hover {
-  background: #14b88a;
+  background: var(--primary-hover);
 }
 
 /* Flag section */

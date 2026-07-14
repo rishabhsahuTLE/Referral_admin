@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FiFlag, FiDownload, FiEdit2, FiMessageSquare } from 'react-icons/fi';
 import DateRangeFilter from './DateRangeFilter';
 import SortBy from './SortBy';
 import PayoutExportModal from './PayoutExportModal';
 import PayoutStagePopup from './PayoutStagePopup';
 import './ReferralPayouts.css';
+
+const NOTE_POPOVER_WIDTH = 240;
 
 function ReferralPayouts({ university }) {
   const [activeTab, setActiveTab] = useState('all');
@@ -13,6 +16,7 @@ function ReferralPayouts({ university }) {
   const [showExportModal, setShowExportModal] = useState(false);
   const [stagePopupItemId, setStagePopupItemId] = useState(null);
   const [noteOpenId, setNoteOpenId] = useState(null);
+  const [notePosition, setNotePosition] = useState(null); // { top, left } in viewport coordinates
 
   const calculateDaysAgo = (daysBack) => {
     const date = new Date();
@@ -336,9 +340,27 @@ function ReferralPayouts({ university }) {
     );
   };
 
+  // Position the flag-note popover from the trigger's own rect and render it via a portal,
+  // so it always renders on top of everything and can never be clipped by the table's
+  // overflow:hidden (which it would be if it stayed a normal absolutely-positioned child).
+  const toggleNote = (itemId, e) => {
+    if (noteOpenId === itemId) {
+      setNoteOpenId(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const left = Math.min(
+      Math.max(rect.left + rect.width / 2 - NOTE_POPOVER_WIDTH / 2, 8),
+      window.innerWidth - NOTE_POPOVER_WIDTH - 8
+    );
+    setNotePosition({ top: rect.bottom + 6, left });
+    setNoteOpenId(itemId);
+  };
+
   const tableData = filterDataForTable();
   const stats = calculateStats();
   const stagePopupItem = mockData.find((i) => i.id === stagePopupItemId) ?? null;
+  const notePopoverItem = noteOpenId ? mockData.find((i) => i.id === noteOpenId) : null;
 
   return (
     <div className="referral-payouts">
@@ -446,34 +468,37 @@ function ReferralPayouts({ university }) {
                 <td className="bank-details">{item.bankDetails}</td>
                 <td className="amount">{item.amount}</td>
                 <td className="stage-cell">
-                  <span
-                    className="stage-badge stage-badge-clickable"
-                    style={{
-                      backgroundColor: getStageColor(item.stage),
-                      color: 'white',
-                    }}
-                    onClick={() => setStagePopupItemId(item.id)}
-                    title="Update payout stage"
-                  >
-                    {item.stage}
-                    <FiEdit2 size={12} style={{ marginLeft: '6px' }} />
-                  </span>
-                  {item.isFlagged && (
-                    <span className="stage-flag-indicators">
-                      <FiFlag size={14} className="stage-flag-icon" title="Flagged" />
-                      <button
-                        className="stage-note-btn"
-                        onClick={() => setNoteOpenId((v) => (v === item.id ? null : item.id))}
-                        onBlur={() => setNoteOpenId(null)}
-                        title="View flag reason"
-                      >
-                        <FiMessageSquare size={14} />
-                      </button>
-                      {noteOpenId === item.id && (
-                        <div className="stage-note-popover">{item.flagDescription}</div>
+                  <div className="stage-cell-inner">
+                    <span
+                      className="stage-badge stage-badge-clickable"
+                      style={{
+                        backgroundColor: getStageColor(item.stage),
+                        color: 'white',
+                      }}
+                      onClick={() => setStagePopupItemId(item.id)}
+                      title="Update payout stage"
+                    >
+                      {item.stage}
+                      <FiEdit2 size={12} />
+                    </span>
+                    {/* Always-rendered fixed-width slot — keeps the badge above aligned
+                        across rows whether or not this particular row is flagged. */}
+                    <span className="stage-flag-slot">
+                      {item.isFlagged && (
+                        <>
+                          <FiFlag size={14} className="stage-flag-icon" title="Flagged" />
+                          <button
+                            className="stage-note-btn"
+                            onClick={(e) => toggleNote(item.id, e)}
+                            onBlur={() => setNoteOpenId(null)}
+                            title="View flag reason"
+                          >
+                            <FiMessageSquare size={14} />
+                          </button>
+                        </>
                       )}
                     </span>
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -497,6 +522,16 @@ function ReferralPayouts({ university }) {
         onStageAdvance={handleStageAdvance}
         onFlag={handleFlag}
       />
+
+      {/* FLAG NOTE POPOVER — portalled to <body> so it's never clipped by the table's overflow:hidden */}
+      {notePopoverItem &&
+        notePosition &&
+        createPortal(
+          <div className="stage-note-popover" style={{ top: notePosition.top, left: notePosition.left }}>
+            {notePopoverItem.flagDescription}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
