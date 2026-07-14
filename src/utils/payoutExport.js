@@ -30,8 +30,6 @@ export const PAYOUT_COLUMN_GROUPS = [
     label: 'Date',
     children: [
       { key: 'date.enrolledOn', label: 'Enrolled On' },
-      { key: 'date.docVerification', label: 'Doc Verification' },
-      { key: 'date.bankVerification', label: 'Bank Verification' },
       { key: 'date.payment', label: 'Payment' },
     ],
   },
@@ -40,10 +38,13 @@ export const PAYOUT_COLUMN_GROUPS = [
     label: 'Point of Contact',
     children: [
       { key: 'poc.counsellor', label: 'Counsellor' },
-      { key: 'poc.docVerification', label: 'Doc Verification' },
-      { key: 'poc.bankVerification', label: 'Bank Verification' },
       { key: 'poc.payment', label: 'Payment' },
     ],
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    children: null,
   },
   {
     key: 'amount',
@@ -60,9 +61,9 @@ export function getAllLeafKeys() {
   return PAYOUT_COLUMN_GROUPS.flatMap(getGroupLeafKeys);
 }
 
-// Small rotating pool of staff so each record gets a plausible-but-deterministic counsellor.
-// (Only the counsellor — doc/bank/payment POCs now come from real stageHistory data, since
-// those are captured for real when an admin advances a record through the stage popup.)
+// Small rotating pool of staff so each record gets a plausible-but-deterministic counsellor
+// (assigned at initial lead intake — separate from the payment POC captured when a payout
+// is actually marked done).
 const COUNSELLOR_POOL = [
   { name: 'Ravi Sharma', phone: '+91 98111 22334' },
   { name: 'Meena Pillai', phone: '+91 98222 33445' },
@@ -75,13 +76,10 @@ function getCounsellorPOC(id) {
   return `${poc.name} (${poc.phone})`;
 }
 
-const dateOf = (entry) => (entry ? entry.date : '-');
-const pocOf = (entry) => (entry ? `${entry.pocName} (${entry.pocPhone})` : '-');
-
-// Builds a flat { columnKey: displayValue } row for one payout record, sourcing doc/bank/payment
-// dates and POC info from the record's real stageHistory (captured via the stage-advance popup).
+// Builds a flat { columnKey: displayValue } row for one payout record, sourcing the payment
+// date/POC from the record's real paymentInfo (captured when it's marked Payment Done).
 export function buildExportRow(item) {
-  const h = item.stageHistory || {};
+  const p = item.paymentInfo;
 
   return {
     'student.name': item.student,
@@ -91,13 +89,10 @@ export function buildExportRow(item) {
     'referrer.course': item.referrerCourse,
     'referrer.id': item.referrerId,
     'date.enrolledOn': item.enrolledDate,
-    'date.docVerification': dateOf(h.docVerification),
-    'date.bankVerification': dateOf(h.bankVerification),
-    'date.payment': dateOf(h.payment),
+    'date.payment': p ? p.date : '-',
     'poc.counsellor': getCounsellorPOC(item.id),
-    'poc.docVerification': pocOf(h.docVerification),
-    'poc.bankVerification': pocOf(h.bankVerification),
-    'poc.payment': pocOf(h.payment),
+    'poc.payment': p ? `${p.pocName} (${p.pocPhone})` : '-',
+    status: item.status,
     amount: item.amount,
   };
 }

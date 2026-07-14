@@ -13,8 +13,7 @@ function SortBy({ onSortChange }) {
     { value: 'amount-low', label: 'Amount (Low to High)' },
     { value: 'name-asc', label: 'Student Name (A-Z)' },
     { value: 'name-desc', label: 'Student Name (Z-A)' },
-    { value: 'stage', label: 'Stage' },
-    { value: 'flagged', label: 'Flagged First' },
+    { value: 'status', label: 'Status' },
   ];
 
   const handleSortSelect = (value) => {

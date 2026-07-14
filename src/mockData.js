@@ -83,14 +83,14 @@ export const initialUniversityData = {
       }
     ],
     reports: [
-      { student: "Aditya Verma", enrollmentNo: "JH2024CSD042", submitted: 12, converted: 8, status: "Flagged", referralsCount: 12, referralsConverted: 8, admitted: 4, paid: 2, inProcess: 2 },
-      { student: "Neha Kapoor", enrollmentNo: "JH2024MDA017", submitted: 7, converted: 5, status: "Clear", referralsCount: 7, referralsConverted: 5, admitted: 3, paid: 1, inProcess: 1 },
-      { student: "Simran Kaur", enrollmentNo: "JH2024TCF009", submitted: 9, converted: 4, status: "Flagged", referralsCount: 9, referralsConverted: 4, admitted: 1, paid: 2, inProcess: 1 },
-      { student: "Pradeep Nair", enrollmentNo: "JH2024MAR111", submitted: 5, converted: 4, status: "Clear", referralsCount: 5, referralsConverted: 4, admitted: 2, paid: 2, inProcess: 0 },
-      { student: "Divya Menon", enrollmentNo: "JH2024CSD088", submitted: 6, converted: 3, status: "Clear", referralsCount: 6, referralsConverted: 3, admitted: 1, paid: 1, inProcess: 1 },
-      { student: "Rajesh Pillai", enrollmentNo: "JH2024MCA009", submitted: 3, converted: 2, status: "Clear", referralsCount: 3, referralsConverted: 2, admitted: 1, paid: 1, inProcess: 0 },
-      { student: "Kavya Suresh", enrollmentNo: "JH2024MDA022", submitted: 11, converted: 7, status: "Flagged", referralsCount: 11, referralsConverted: 7, admitted: 3, paid: 2, inProcess: 2 },
-      { student: "Arjun Mathew", enrollmentNo: "JH2024PHY114", submitted: 4, converted: 3, status: "Clear", referralsCount: 4, referralsConverted: 3, admitted: 2, paid: 1, inProcess: 0 }
+      { student: "Aditya Verma", enrollmentNo: "JH2024CSD042", submitted: 12, converted: 8, dropped: 2, status: "Flagged", referralsCount: 12, referralsConverted: 8, admitted: 4, paid: 2, inProcess: 2 },
+      { student: "Neha Kapoor", enrollmentNo: "JH2024MDA017", submitted: 7, converted: 5, dropped: 1, status: "Clear", referralsCount: 7, referralsConverted: 5, admitted: 3, paid: 1, inProcess: 1 },
+      { student: "Simran Kaur", enrollmentNo: "JH2024TCF009", submitted: 9, converted: 4, dropped: 3, status: "Flagged", referralsCount: 9, referralsConverted: 4, admitted: 1, paid: 2, inProcess: 1 },
+      { student: "Pradeep Nair", enrollmentNo: "JH2024MAR111", submitted: 5, converted: 4, dropped: 1, status: "Clear", referralsCount: 5, referralsConverted: 4, admitted: 2, paid: 2, inProcess: 0 },
+      { student: "Divya Menon", enrollmentNo: "JH2024CSD088", submitted: 6, converted: 3, dropped: 2, status: "Clear", referralsCount: 6, referralsConverted: 3, admitted: 1, paid: 1, inProcess: 1 },
+      { student: "Rajesh Pillai", enrollmentNo: "JH2024MCA009", submitted: 3, converted: 2, dropped: 1, status: "Clear", referralsCount: 3, referralsConverted: 2, admitted: 1, paid: 1, inProcess: 0 },
+      { student: "Kavya Suresh", enrollmentNo: "JH2024MDA022", submitted: 11, converted: 7, dropped: 2, status: "Flagged", referralsCount: 11, referralsConverted: 7, admitted: 3, paid: 2, inProcess: 2 },
+      { student: "Arjun Mathew", enrollmentNo: "JH2024PHY114", submitted: 4, converted: 3, dropped: 1, status: "Clear", referralsCount: 4, referralsConverted: 3, admitted: 2, paid: 1, inProcess: 0 }
     ],
     refereeReports: [
       { refereeName: "Priya Sharma",   refereeEnrollNo: "JH2024REF001", refereeCourse: "B.Tech CSE",      referrerName: "Aditya Verma",  referrerCourse: "B.Tech CSE",      applicationStatus: "Enrolled",    admitted: 1, paid: 1, inProcess: 0, status: "Clear"   },
@@ -174,9 +174,9 @@ export const initialUniversityData = {
       }
     ],
     reports: [
-      { student: "Srishti Sen", enrollmentNo: "IB2024BCH011", submitted: 18, converted: 12, status: "Flagged", referralsCount: 18, referralsConverted: 12, admitted: 6, paid: 4, inProcess: 2 },
-      { student: "Kabir Singh", enrollmentNo: "IB2024PHY044", submitted: 14, converted: 9, status: "Clear", referralsCount: 14, referralsConverted: 9, admitted: 4, paid: 3, inProcess: 2 },
-      { student: "Rahul Sharma", enrollmentNo: "IB2024ENG021", submitted: 12, converted: 8, status: "Clear", referralsCount: 12, referralsConverted: 8, admitted: 3, paid: 3, inProcess: 2 }
+      { student: "Srishti Sen", enrollmentNo: "IB2024BCH011", submitted: 18, converted: 12, dropped: 4, status: "Flagged", referralsCount: 18, referralsConverted: 12, admitted: 6, paid: 4, inProcess: 2 },
+      { student: "Kabir Singh", enrollmentNo: "IB2024PHY044", submitted: 14, converted: 9, dropped: 3, status: "Clear", referralsCount: 14, referralsConverted: 9, admitted: 4, paid: 3, inProcess: 2 },
+      { student: "Rahul Sharma", enrollmentNo: "IB2024ENG021", submitted: 12, converted: 8, dropped: 2, status: "Clear", referralsCount: 12, referralsConverted: 8, admitted: 3, paid: 3, inProcess: 2 }
     ],
     refereeReports: [
       { refereeName: "Aarav Mehta",    refereeEnrollNo: "IB2024REF001", refereeCourse: "B.Tech CSE",          referrerName: "Srishti Sen",   referrerCourse: "B.Tech CSE",          applicationStatus: "Enrolled",    admitted: 1, paid: 1, inProcess: 0, status: "Clear"   },
@@ -255,9 +255,9 @@ export const initialUniversityData = {
       }
     ],
     reports: [
-      { student: "Meera Nair", enrollmentNo: "IM2024IR002", submitted: 15, converted: 10, status: "Flagged", referralsCount: 15, referralsConverted: 10, admitted: 5, paid: 3, inProcess: 2 },
-      { student: "Akash Roy", enrollmentNo: "IM2024CS089", submitted: 12, converted: 7, status: "Clear", referralsCount: 12, referralsConverted: 7, admitted: 3, paid: 2, inProcess: 2 },
-      { student: "Tanvi Shah", enrollmentNo: "IM2024LG112", submitted: 10, converted: 6, status: "Clear", referralsCount: 10, referralsConverted: 6, admitted: 3, paid: 2, inProcess: 1 }
+      { student: "Meera Nair", enrollmentNo: "IM2024IR002", submitted: 15, converted: 10, dropped: 3, status: "Flagged", referralsCount: 15, referralsConverted: 10, admitted: 5, paid: 3, inProcess: 2 },
+      { student: "Akash Roy", enrollmentNo: "IM2024CS089", submitted: 12, converted: 7, dropped: 3, status: "Clear", referralsCount: 12, referralsConverted: 7, admitted: 3, paid: 2, inProcess: 2 },
+      { student: "Tanvi Shah", enrollmentNo: "IM2024LG112", submitted: 10, converted: 6, dropped: 2, status: "Clear", referralsCount: 10, referralsConverted: 6, admitted: 3, paid: 2, inProcess: 1 }
     ],
     refereeReports: [
       { refereeName: "Devansh Joshi",  refereeEnrollNo: "IM2024REF001", refereeCourse: "B.Tech CSE",         referrerName: "Meera Nair",  referrerCourse: "B.Tech CSE",         applicationStatus: "Enrolled",    admitted: 1, paid: 1, inProcess: 0, status: "Clear"   },

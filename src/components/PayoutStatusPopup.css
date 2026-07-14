@@ -1,0 +1,346 @@
+.payout-status-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+}
+
+.payout-status-card {
+  background: #fff;
+  border-radius: 12px;
+  width: 460px;
+  max-width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(226, 223, 241, 0.8);
+  position: relative;
+}
+
+.payout-status-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e6e9f0;
+}
+
+.payout-status-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2332;
+}
+
+.payout-status-subtitle {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.payout-status-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.payout-status-close:hover {
+  background: #f1f3f6;
+  color: #333;
+}
+
+.payout-status-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Two-way choice (Payment Done / Bank Details Pending) */
+.payout-status-choice-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payout-status-choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #e6e9f0;
+  background: #fafbfc;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a2332;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+}
+
+.payout-status-choice-btn.payment-done:hover {
+  border-color: #0d9488;
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.payout-status-choice-btn.bank-pending:hover {
+  border-color: #dc2626;
+  background: #fff5f5;
+  color: #dc2626;
+}
+
+/* Read-only "Payment Done" summary */
+.payout-status-done-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  border: 1.5px solid rgba(13, 148, 136, 0.25);
+}
+
+.payout-status-done-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0d9488;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.payout-status-done-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #555;
+}
+
+/* Shared sub-form (Reference ID / etc.) */
+.payout-status-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #fafbfc;
+  border: 1px solid #e6e9f0;
+}
+
+.payout-status-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.payout-status-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.payout-status-input:focus {
+  border-color: var(--primary);
+}
+
+.payout-status-input-readonly {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 13px;
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
+  box-sizing: border-box;
+}
+
+.payout-status-hint {
+  font-size: 11px;
+  color: #999;
+}
+
+.payout-status-error {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.payout-status-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.payout-status-cancel-btn {
+  padding: 8px 16px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.payout-status-cancel-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.payout-status-confirm-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.payout-status-confirm-btn:hover {
+  background: var(--primary-hover);
+}
+
+/* Bank Details Pending — nudge panel */
+.payout-status-nudge-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #fff5f5;
+  border: 1.5px solid rgba(220, 38, 38, 0.25);
+}
+
+.payout-status-nudge-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.payout-status-nudge-textarea {
+  width: 100%;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.payout-status-nudge-textarea:focus {
+  border-color: #dc2626;
+}
+
+.payout-status-nudge-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.payout-status-nudge-btn:hover {
+  background: #b91c1c;
+}
+
+.payout-status-nudge-btn.cooling-down {
+  background: #f3a3a3;
+}
+
+.payout-status-nudge-btn.shaking {
+  animation: payout-status-shake 0.5s ease;
+}
+
+@keyframes payout-status-shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+.payout-status-mark-done-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.payout-status-mark-done-link:hover {
+  text-decoration: underline;
+}
+
+/* Bottom toast — success (fades after 2s) / error (matches same spot & timing) */
+.payout-status-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: payout-status-toast-fade 2s ease forwards;
+}
+
+.payout-status-toast.success {
+  background: #1a2332;
+  color: #fff;
+}
+
+.payout-status-toast.error {
+  background: #dc2626;
+  color: #fff;
+}
+
+@keyframes payout-status-toast-fade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}

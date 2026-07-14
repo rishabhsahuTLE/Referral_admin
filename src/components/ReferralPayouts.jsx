@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { FiFlag, FiDownload, FiEdit2, FiMessageSquare } from 'react-icons/fi';
+import { FiDownload, FiEdit2, FiMessageSquare } from 'react-icons/fi';
 import DateRangeFilter from './DateRangeFilter';
 import SortBy from './SortBy';
 import PayoutExportModal from './PayoutExportModal';
-import PayoutStagePopup from './PayoutStagePopup';
+import PayoutStatusPopup, { DEFAULT_NUDGE_MESSAGE } from './PayoutStatusPopup';
+import PayoutCommentModal from './PayoutCommentModal';
 import './ReferralPayouts.css';
 
-const NOTE_POPOVER_WIDTH = 240;
+const POC_NAME = 'Rishabh Sahu';
+const POC_PHONE = '+91 98765 43210';
 
 function ReferralPayouts({ university }) {
   const [activeTab, setActiveTab] = useState('all');
   const [sortBy, setSortBy] = useState('date-newest');
   const [dateRange, setDateRange] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [stagePopupItemId, setStagePopupItemId] = useState(null);
-  const [noteOpenId, setNoteOpenId] = useState(null);
-  const [notePosition, setNotePosition] = useState(null); // { top, left } in viewport coordinates
+  const [statusPopupItemId, setStatusPopupItemId] = useState(null);
+  const [commentPopupItemId, setCommentPopupItemId] = useState(null);
 
   const calculateDaysAgo = (daysBack) => {
     const date = new Date();
@@ -38,12 +38,11 @@ function ReferralPayouts({ university }) {
       daysAgo: 29,
       amount: '₹5,000',
       amountValue: 5000,
-      stage: 'Doc Verification',
+      status: 'Pending Payout',
       bankDetails: 'Rahul Sharma',
-      isFlagged: true,
-      flagDescription:
-        'Referrer has not submitted updated address proof since 25th May; documents pending verification.',
-      stageHistory: { docVerification: null, bankVerification: null, payment: null },
+      paymentInfo: null,
+      nudge: { message: DEFAULT_NUDGE_MESSAGE, lastSentAt: null },
+      comment: '',
     },
     {
       id: 2,
@@ -58,15 +57,11 @@ function ReferralPayouts({ university }) {
       daysAgo: 22,
       amount: '₹3,000',
       amountValue: 3000,
-      stage: 'Bank Verification',
+      status: 'Bank Details Pending',
       bankDetails: 'Sneha Patel',
-      isFlagged: false,
-      flagDescription: '',
-      stageHistory: {
-        docVerification: { date: calculateDaysAgo(18), pocName: 'Rishabh Sahu', pocPhone: '+91 98765 43210', reference: '' },
-        bankVerification: null,
-        payment: null,
-      },
+      paymentInfo: null,
+      nudge: { message: DEFAULT_NUDGE_MESSAGE, lastSentAt: null },
+      comment: 'Referrer confirmed they will update bank details by Friday.',
     },
     {
       id: 3,
@@ -81,15 +76,11 @@ function ReferralPayouts({ university }) {
       daysAgo: 15,
       amount: '₹5,000',
       amountValue: 5000,
-      stage: 'Payment Pending',
+      status: 'Payment Done',
       bankDetails: 'Priya Mehta',
-      isFlagged: false,
-      flagDescription: '',
-      stageHistory: {
-        docVerification: { date: calculateDaysAgo(11), pocName: 'Rishabh Sahu', pocPhone: '+91 98765 43210', reference: '' },
-        bankVerification: { date: calculateDaysAgo(6), pocName: 'Rishabh Sahu', pocPhone: '+91 98765 43210', reference: '' },
-        payment: null,
-      },
+      paymentInfo: { referenceId: 'TXN-2026-00417', pocName: POC_NAME, pocPhone: POC_PHONE, date: calculateDaysAgo(6) },
+      nudge: { message: DEFAULT_NUDGE_MESSAGE, lastSentAt: null },
+      comment: '',
     },
     {
       id: 4,
@@ -104,11 +95,11 @@ function ReferralPayouts({ university }) {
       daysAgo: 8,
       amount: '₹4,500',
       amountValue: 4500,
-      stage: 'Doc Verification',
+      status: 'Pending Payout',
       bankDetails: 'Amit Singh',
-      isFlagged: false,
-      flagDescription: '',
-      stageHistory: { docVerification: null, bankVerification: null, payment: null },
+      paymentInfo: null,
+      nudge: { message: DEFAULT_NUDGE_MESSAGE, lastSentAt: null },
+      comment: '',
     },
     {
       id: 5,
@@ -123,16 +114,11 @@ function ReferralPayouts({ university }) {
       daysAgo: 35,
       amount: '₹6,000',
       amountValue: 6000,
-      stage: 'Bank Verification',
+      status: 'Bank Details Pending',
       bankDetails: 'Neha Gupta Sharma',
-      isFlagged: true,
-      flagDescription:
-        "Bank account name mismatch with PAN details — referrer's registered bank name differs from PAN records. Awaiting correction before proceeding.",
-      stageHistory: {
-        docVerification: { date: calculateDaysAgo(31), pocName: 'Rishabh Sahu', pocPhone: '+91 98765 43210', reference: '' },
-        bankVerification: null,
-        payment: null,
-      },
+      paymentInfo: null,
+      nudge: { message: DEFAULT_NUDGE_MESSAGE, lastSentAt: null },
+      comment: "Bank account name mismatch with PAN details — referrer's registered bank name differs from PAN records.",
     },
     {
       id: 6,
@@ -147,16 +133,11 @@ function ReferralPayouts({ university }) {
       daysAgo: 12,
       amount: '₹3,500',
       amountValue: 3500,
-      stage: 'Bank Verification',
+      status: 'Pending Payout',
       bankDetails: 'Divya Menon',
-      isFlagged: true,
-      flagDescription:
-        'Referrer flagged for a bank account number that matches another active referral payout — needs manual reconciliation before proceeding.',
-      stageHistory: {
-        docVerification: { date: calculateDaysAgo(8), pocName: 'Rishabh Sahu', pocPhone: '+91 98765 43210', reference: '' },
-        bankVerification: null,
-        payment: null,
-      },
+      paymentInfo: null,
+      nudge: { message: DEFAULT_NUDGE_MESSAGE, lastSentAt: null },
+      comment: '',
     },
     {
       id: 7,
@@ -171,16 +152,11 @@ function ReferralPayouts({ university }) {
       daysAgo: 40,
       amount: '₹5,500',
       amountValue: 5500,
-      stage: 'Payment Pending',
+      status: 'Payment Done',
       bankDetails: 'Karthik Reddy',
-      isFlagged: true,
-      flagDescription:
-        'Referrer requested a payout hold pending confirmation of updated PAN card — do not release payment until resolved.',
-      stageHistory: {
-        docVerification: { date: calculateDaysAgo(36), pocName: 'Rishabh Sahu', pocPhone: '+91 98765 43210', reference: '' },
-        bankVerification: { date: calculateDaysAgo(31), pocName: 'Rishabh Sahu', pocPhone: '+91 98765 43210', reference: '' },
-        payment: null,
-      },
+      paymentInfo: { referenceId: 'TXN-2026-00392', pocName: POC_NAME, pocPhone: POC_PHONE, date: calculateDaysAgo(20) },
+      nudge: { message: DEFAULT_NUDGE_MESSAGE, lastSentAt: null },
+      comment: '',
     },
   ];
 
@@ -190,17 +166,14 @@ function ReferralPayouts({ university }) {
     let filtered = mockData;
 
     switch (activeTab) {
-      case 'docVerification':
-        filtered = filtered.filter((item) => item.stage === 'Doc Verification');
+      case 'paymentDone':
+        filtered = filtered.filter((item) => item.status === 'Payment Done');
         break;
-      case 'bankVerification':
-        filtered = filtered.filter((item) => item.stage === 'Bank Verification');
+      case 'pendingPayout':
+        filtered = filtered.filter((item) => item.status === 'Pending Payout');
         break;
-      case 'paymentPending':
-        filtered = filtered.filter((item) => item.stage === 'Payment Pending');
-        break;
-      case 'flagged':
-        filtered = filtered.filter((item) => item.isFlagged);
+      case 'bankDetailsPending':
+        filtered = filtered.filter((item) => item.status === 'Bank Details Pending');
         break;
       case 'all':
       default:
@@ -214,12 +187,7 @@ function ReferralPayouts({ university }) {
       });
     }
 
-    filtered = sortData(filtered);
-
-    // Always push flagged items to the top, preserving relative order within each group
-    const flaggedItems = filtered.filter((item) => item.isFlagged);
-    const nonFlaggedItems = filtered.filter((item) => !item.isFlagged);
-    return [...flaggedItems, ...nonFlaggedItems];
+    return sortData(filtered);
   };
 
   const filterDataForStats = () => {
@@ -251,10 +219,8 @@ function ReferralPayouts({ university }) {
         return dataCopy.sort((a, b) => a.student.localeCompare(b.student));
       case 'name-desc':
         return dataCopy.sort((a, b) => b.student.localeCompare(a.student));
-      case 'stage':
-        return dataCopy.sort((a, b) => a.stage.localeCompare(b.stage));
-      case 'flagged':
-        return dataCopy.sort((a, b) => (b.isFlagged ? 1 : 0) - (a.isFlagged ? 1 : 0));
+      case 'status':
+        return dataCopy.sort((a, b) => a.status.localeCompare(b.status));
       default:
         return dataCopy;
     }
@@ -263,104 +229,65 @@ function ReferralPayouts({ university }) {
   const calculateStats = () => {
     const statsData = filterDataForStats();
 
-    // "Paid" records are settled — excluded from outstanding due totals.
-    const totalDue = mockData
-      .filter((item) => item.stage !== 'Paid')
+    const totalStudents = statsData.length;
+    const amountDue = statsData
+      .filter((item) => item.status !== 'Payment Done')
       .reduce((sum, item) => sum + item.amountValue, 0);
-    const filteredDue = statsData
-      .filter((item) => item.stage !== 'Paid')
-      .reduce((sum, item) => sum + item.amountValue, 0);
-    const bankIssues = statsData.filter((item) => item.stage === 'Bank Verification').length;
-    const pendingVerification = statsData.filter(
-      (item) => item.stage === 'Doc Verification'
-    ).length;
-
-    // Dynamic duration label
-    let durationLabel;
-    let durationSubtext;
-    const formatShortDate = (d) =>
-      d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-
-    if (dateRange && dateRange.startDate && dateRange.endDate) {
-      durationLabel = 'Selected Duration';
-      durationSubtext = `${formatShortDate(dateRange.startDate)} – ${formatShortDate(dateRange.endDate)}`;
-    } else {
-      const now = new Date();
-      durationLabel = 'This Month';
-      durationSubtext = now.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
-    }
+    const paymentDoneCount = statsData.filter((item) => item.status === 'Payment Done').length;
+    const pendingPayoutCount = statsData.filter((item) => item.status === 'Pending Payout').length;
+    const bankDetailsPendingCount = statsData.filter((item) => item.status === 'Bank Details Pending').length;
 
     return {
-      totalDue: `₹${totalDue.toLocaleString('en-IN')}`,
-      filteredDue: `₹${filteredDue.toLocaleString('en-IN')}`,
-      durationLabel,
-      durationSubtext,
-      bankIssues,
-      pendingVerification,
+      totalStudents,
+      amountDue: `₹${amountDue.toLocaleString('en-IN')}`,
+      paymentDoneCount,
+      pendingPayoutCount,
+      bankDetailsPendingCount,
     };
   };
 
-  const getStageColor = (stage) => {
-    switch (stage) {
-      case 'Doc Verification':
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Pending Payout':
         return '#ffa500';
-      case 'Bank Verification':
-        return '#4169e1';
-      case 'Payment Pending':
-        return '#32cd32';
-      case 'Paid':
+      case 'Bank Details Pending':
+        return '#dc2626';
+      case 'Payment Done':
         return '#0d9488';
       default:
         return '#808080';
     }
   };
 
-  const handleStageAdvance = (itemId, { newStage, historyKey, date, pocPhone, reference }) => {
+  const handleMarkPaymentDone = (itemId, referenceId) => {
+    const today = calculateDaysAgo(0);
     setMockData((prev) =>
       prev.map((item) =>
-        item.id !== itemId
-          ? item
-          : {
-              ...item,
-              stage: newStage,
-              stageHistory: {
-                ...item.stageHistory,
-                [historyKey]: { date, pocName: 'Rishabh Sahu', pocPhone, reference },
-              },
-            }
+        item.id === itemId
+          ? { ...item, status: 'Payment Done', paymentInfo: { referenceId, pocName: POC_NAME, pocPhone: POC_PHONE, date: today } }
+          : item
       )
     );
   };
 
-  const handleFlag = (itemId, description) => {
+  const handleMarkBankPending = (itemId) => {
+    setMockData((prev) => prev.map((item) => (item.id === itemId ? { ...item, status: 'Bank Details Pending' } : item)));
+  };
+
+  const handleNudge = (itemId, message) => {
     setMockData((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, isFlagged: true, flagDescription: description } : item
-      )
+      prev.map((item) => (item.id === itemId ? { ...item, nudge: { message, lastSentAt: new Date() } } : item))
     );
   };
 
-  // Position the flag-note popover from the trigger's own rect and render it via a portal,
-  // so it always renders on top of everything and can never be clipped by the table's
-  // overflow:hidden (which it would be if it stayed a normal absolutely-positioned child).
-  const toggleNote = (itemId, e) => {
-    if (noteOpenId === itemId) {
-      setNoteOpenId(null);
-      return;
-    }
-    const rect = e.currentTarget.getBoundingClientRect();
-    const left = Math.min(
-      Math.max(rect.left + rect.width / 2 - NOTE_POPOVER_WIDTH / 2, 8),
-      window.innerWidth - NOTE_POPOVER_WIDTH - 8
-    );
-    setNotePosition({ top: rect.bottom + 6, left });
-    setNoteOpenId(itemId);
+  const handleSaveComment = (itemId, text) => {
+    setMockData((prev) => prev.map((item) => (item.id === itemId ? { ...item, comment: text } : item)));
   };
 
   const tableData = filterDataForTable();
   const stats = calculateStats();
-  const stagePopupItem = mockData.find((i) => i.id === stagePopupItemId) ?? null;
-  const notePopoverItem = noteOpenId ? mockData.find((i) => i.id === noteOpenId) : null;
+  const statusPopupItem = mockData.find((i) => i.id === statusPopupItemId) ?? null;
+  const commentPopupItem = mockData.find((i) => i.id === commentPopupItemId) ?? null;
 
   return (
     <div className="referral-payouts">
@@ -377,62 +304,51 @@ function ReferralPayouts({ university }) {
 
       {/* STAT TILES ROW */}
       <div className="header-stats">
-        <div className="stat-box">
-          <label>Total Due</label>
-          <span className="stat-amount">{stats.totalDue}</span>
-          <p>Amount</p>
+        <div className="stat-box stat-box-clickable" onClick={() => setActiveTab('all')}>
+          <label>Total</label>
+          <span className="stat-amount">{stats.totalStudents} students</span>
+          <p>{stats.amountDue} due</p>
         </div>
-        <div className="stat-box">
-          <label>{stats.durationLabel}</label>
-          <span className="stat-amount">{stats.filteredDue}</span>
-          <p>{stats.durationSubtext}</p>
+        <div className="stat-box stat-box-clickable" onClick={() => setActiveTab('paymentDone')}>
+          <label>Payout Done</label>
+          <span className="stat-amount">{stats.paymentDoneCount}</span>
+          <p>students</p>
         </div>
-        <div className="stat-box urgent-stat">
-          <label>Bank Issues</label>
-          <span className="stat-amount">{stats.bankIssues}</span>
-          <p>Pending verification</p>
+        <div className="stat-box stat-box-clickable" onClick={() => setActiveTab('pendingPayout')}>
+          <label>Pending Payout</label>
+          <span className="stat-amount">{stats.pendingPayoutCount}</span>
+          <p>students</p>
         </div>
-        <div className="stat-box">
-          <label>Pending Verification</label>
-          <span className="stat-amount">{stats.pendingVerification}</span>
-          <p>Sort to upload</p>
+        <div className="stat-box stat-box-clickable urgent-stat" onClick={() => setActiveTab('bankDetailsPending')}>
+          <label>Bank Details Pending</label>
+          <span className="stat-amount" style={{ color: 'var(--danger)' }}>{stats.bankDetailsPendingCount}</span>
+          <p>students</p>
         </div>
       </div>
 
       {/* TABS */}
       <div className="tabs-container">
         <div className="tabs">
-          <button
-            className={`tab tab-all ${activeTab === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveTab('all')}
-          >
+          <button className={`tab tab-even ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
             All
           </button>
           <button
-            className={`tab tab-step ${activeTab === 'docVerification' ? 'active' : ''}`}
-            onClick={() => setActiveTab('docVerification')}
+            className={`tab tab-even ${activeTab === 'paymentDone' ? 'active' : ''}`}
+            onClick={() => setActiveTab('paymentDone')}
           >
-            Doc Verification
-          </button>
-          <span className="tab-arrow">→</span>
-          <button
-            className={`tab tab-step ${activeTab === 'bankVerification' ? 'active' : ''}`}
-            onClick={() => setActiveTab('bankVerification')}
-          >
-            Bank Verification
-          </button>
-          <span className="tab-arrow">→</span>
-          <button
-            className={`tab tab-step ${activeTab === 'paymentPending' ? 'active' : ''}`}
-            onClick={() => setActiveTab('paymentPending')}
-          >
-            Payment Pending
+            Payout Done
           </button>
           <button
-            className={`tab tab-flagged ${activeTab === 'flagged' ? 'active' : ''}`}
-            onClick={() => setActiveTab('flagged')}
+            className={`tab tab-even ${activeTab === 'pendingPayout' ? 'active' : ''}`}
+            onClick={() => setActiveTab('pendingPayout')}
           >
-            Flagged
+            Pending Payout
+          </button>
+          <button
+            className={`tab tab-even ${activeTab === 'bankDetailsPending' ? 'active' : ''}`}
+            onClick={() => setActiveTab('bankDetailsPending')}
+          >
+            Bank Details Pending
           </button>
         </div>
       </div>
@@ -448,15 +364,13 @@ function ReferralPayouts({ university }) {
               <th>ENROLLED ON</th>
               <th>BANK DETAILS</th>
               <th>AMOUNT</th>
-              <th>STAGE</th>
+              <th>STATUS</th>
+              <th>COMMENT</th>
             </tr>
           </thead>
           <tbody>
             {tableData.map((item) => (
-              <tr
-                key={item.id}
-                className={`table-row ${item.isFlagged ? 'flagged-row' : ''}`}
-              >
+              <tr key={item.id} className={`table-row ${item.status === 'Bank Details Pending' ? 'bank-pending-row' : ''}`}>
                 <td className="student-name">{item.referrer}</td>
                 <td className="referrer-name">{item.student}</td>
                 <td className="course-name">{item.course}</td>
@@ -468,37 +382,24 @@ function ReferralPayouts({ university }) {
                 <td className="bank-details">{item.bankDetails}</td>
                 <td className="amount">{item.amount}</td>
                 <td className="stage-cell">
-                  <div className="stage-cell-inner">
-                    <span
-                      className="stage-badge stage-badge-clickable"
-                      style={{
-                        backgroundColor: getStageColor(item.stage),
-                        color: 'white',
-                      }}
-                      onClick={() => setStagePopupItemId(item.id)}
-                      title="Update payout stage"
-                    >
-                      {item.stage}
-                      <FiEdit2 size={12} />
-                    </span>
-                    {/* Always-rendered fixed-width slot — keeps the badge above aligned
-                        across rows whether or not this particular row is flagged. */}
-                    <span className="stage-flag-slot">
-                      {item.isFlagged && (
-                        <>
-                          <FiFlag size={14} className="stage-flag-icon" title="Flagged" />
-                          <button
-                            className="stage-note-btn"
-                            onClick={(e) => toggleNote(item.id, e)}
-                            onBlur={() => setNoteOpenId(null)}
-                            title="View flag reason"
-                          >
-                            <FiMessageSquare size={14} />
-                          </button>
-                        </>
-                      )}
-                    </span>
-                  </div>
+                  <span
+                    className="stage-badge stage-badge-clickable"
+                    style={{ backgroundColor: getStatusColor(item.status), color: 'white' }}
+                    onClick={() => setStatusPopupItemId(item.id)}
+                    title="Update payout status"
+                  >
+                    {item.status}
+                    <FiEdit2 size={12} />
+                  </span>
+                </td>
+                <td className="comment-cell">
+                  <button
+                    className={`comment-btn ${item.comment ? 'has-comment' : ''}`}
+                    onClick={() => setCommentPopupItemId(item.id)}
+                    title={item.comment ? 'View / edit remark' : 'Add a remark'}
+                  >
+                    <FiMessageSquare size={16} />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -509,29 +410,23 @@ function ReferralPayouts({ university }) {
       <div className="records-count">{tableData.length} records</div>
 
       {/* EXPORT MODAL */}
-      <PayoutExportModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        records={tableData}
+      <PayoutExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} records={tableData} />
+
+      {/* STATUS UPDATE POPUP */}
+      <PayoutStatusPopup
+        item={statusPopupItem}
+        onClose={() => setStatusPopupItemId(null)}
+        onMarkPaymentDone={handleMarkPaymentDone}
+        onMarkBankPending={handleMarkBankPending}
+        onNudge={handleNudge}
       />
 
-      {/* STAGE UPDATE POPUP */}
-      <PayoutStagePopup
-        item={stagePopupItem}
-        onClose={() => setStagePopupItemId(null)}
-        onStageAdvance={handleStageAdvance}
-        onFlag={handleFlag}
+      {/* COMMENT MODAL */}
+      <PayoutCommentModal
+        item={commentPopupItem}
+        onClose={() => setCommentPopupItemId(null)}
+        onSave={handleSaveComment}
       />
-
-      {/* FLAG NOTE POPOVER — portalled to <body> so it's never clipped by the table's overflow:hidden */}
-      {notePopoverItem &&
-        notePosition &&
-        createPortal(
-          <div className="stage-note-popover" style={{ top: notePosition.top, left: notePosition.left }}>
-            {notePopoverItem.flagDescription}
-          </div>,
-          document.body
-        )}
     </div>
   );
 }

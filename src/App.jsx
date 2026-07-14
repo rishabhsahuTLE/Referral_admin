@@ -282,8 +282,8 @@ Approved rewards will be credited to the bank account registered in the student 
               backgroundColor:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:'12px',
               padding:'24px', boxShadow:'var(--shadow-sm)'
             }}>
-              <h2 style={{ fontWeight:'700', fontSize:'20px', color:'var(--text-main)', marginBottom:'8px' }}>Policy & Content Management</h2>
-              <p style={{ fontSize:'13px', color:'var(--text-muted)', lineHeight:'1.5' }}>Manage FAQs, referral policies, and terms & conditions in one place.</p>
+              <h2 style={{ fontWeight:'700', fontSize:'20px', color:'var(--text-main)', marginBottom:'8px' }}>Referral Configuration</h2>
+              <p style={{ fontSize:'13px', color:'var(--text-muted)', lineHeight:'1.5' }}>Manage referral programmes — cost, incentive percentage, and effective dates.</p>
             </div>
 
             {/* Referral Configuration Section */}
@@ -307,6 +307,11 @@ Approved rewards will be credited to the bank account registered in the student 
               <ReferralPolicy data={currentUniData} onUpdatePolicy={handleUpdatePolicy} />
             </div>
 
+            {/* FAQ Management + Terms & Conditions temporarily disabled — guarded with
+                `false &&` instead of a JSX comment since this block contains its own
+                inline `{/* ... *\/}` section-header comments. */}
+            {false && (
+            <>
             {/* FAQ Management Section */}
             <div style={{ display:'flex', flexDirection:'column', gap:'0' }}>
               <div style={{
@@ -551,6 +556,8 @@ Approved rewards will be credited to the bank account registered in the student 
                 </div>
               </div>
             </div>
+            </>
+            )}
           </div>
         );
       }
@@ -1248,7 +1255,7 @@ Approved rewards will be credited to the bank account registered in the student 
       case "notification_log": return "Audit Trail";
       case "manage_faqs": return "Manage FAQs";
       case "terms_conditions": return "Terms & Conditions";
-      case "policy_content": return "Policy & Content";
+      case "policy_content": return "Referral Configuration";
       case "referral_payouts": return "Referral Payouts";
       case "payment_history": return "Payment History";
       default: return "Portal";
@@ -1312,8 +1319,8 @@ Approved rewards will be credited to the bank account registered in the student 
               </a>
             </li>
 
-            <li>
-              <a 
+            {/* <li>
+              <a
                 className={`sidebar-item ${view === "notification_log" ? "active" : ""}`}
                 onClick={() => setView("notification_log")}
               >
@@ -1323,7 +1330,7 @@ Approved rewards will be credited to the bank account registered in the student 
                 </div>
                 {notifBadge > 0 && <span className="sidebar-badge">{notifBadge}</span>}
               </a>
-            </li>
+            </li> */}
 
             {/* <li>
               <a 
@@ -1358,7 +1365,7 @@ Approved rewards will be credited to the bank account registered in the student 
               >
                 <div className="sidebar-item-left">
                   <FileText size={18} />
-                  <span>Policy & Content</span>
+                  <span>Referral Configuration</span>
                 </div>
               </a>
             </li>

@@ -56,7 +56,7 @@ function PaymentHistory({ university }) {
                 <th>REFERRER</th>
                 <th>COURSE / UNIVERSITY</th>
                 <th>AMOUNT</th>
-                <th>SITE REFERENCE</th>
+                <th>UTR/REFERENCE ID</th>
               </tr>
             </thead>
             <tbody>

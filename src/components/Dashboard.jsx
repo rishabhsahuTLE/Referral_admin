@@ -1,26 +1,13 @@
 import React from "react";
-import { 
-  AlertTriangle, 
-  ChevronLeft, 
-  ChevronRight, 
-  IndianRupee, 
-  Users, 
-  TrendingUp, 
-  User, 
-  ArrowRight, 
+import {
+  TrendingUp,
+  ArrowRight,
   AlertOctagon,
-  Copy,
-  FileText,
-  UserCheck
+  Copy
 } from "lucide-react";
 
-export default function Dashboard({ 
-  data, 
-  setView, 
-  activeDuplicateIndex, 
-  setActiveDuplicateIndex 
-}) {
-  const { stats, programs, referrers, duplicateLeads, reports } = data;
+export default function Dashboard({ data, setView }) {
+  const { stats, programs, referrers, reports } = data;
 
   // Calculate overall conversion rate
   const totalConverted = programs.reduce((acc, curr) => acc + curr.converted, 0);
@@ -36,20 +23,122 @@ export default function Dashboard({
     }).format(amount);
   };
 
-  // Handle duplicate leads carousel navigation
-  const handlePrevDuplicate = (e) => {
-    e.stopPropagation();
-    if (duplicateLeads.length === 0) return;
-    setActiveDuplicateIndex((prev) => (prev === 0 ? duplicateLeads.length - 1 : prev - 1));
+  // Math helper to build SVG pie chart slices (moved here from Reports.jsx's Visual Charts tab)
+  const getCoordinatesForPercent = (percent) => {
+    const x = Math.cos(2 * Math.PI * percent);
+    const y = Math.sin(2 * Math.PI * percent);
+    return [x, y];
   };
 
-  const handleNextDuplicate = (e) => {
-    e.stopPropagation();
-    if (duplicateLeads.length === 0) return;
-    setActiveDuplicateIndex((prev) => (prev === duplicateLeads.length - 1 ? 0 : prev + 1));
+  // Calculate total cost of referral across all programmes
+  const calculateTotalReferralCost = () => {
+    let totalReferralCost = 0;
+    let totalCourseRevenue = 0;
+
+    programs.forEach(p => {
+      const referralCostPerConversion = p.referrerIncentive + (p.cost * p.refereeDiscount / 100);
+      totalReferralCost += referralCostPerConversion * p.converted;
+      totalCourseRevenue += p.cost * p.converted;
+    });
+
+    return {
+      totalReferralCost,
+      totalCourseRevenue,
+      percentage: totalCourseRevenue > 0 ? (totalReferralCost / totalCourseRevenue * 100).toFixed(1) : 0
+    };
   };
 
-  const currentDup = duplicateLeads[activeDuplicateIndex] || duplicateLeads[0];
+  const totalReferralData = calculateTotalReferralCost();
+
+  // Render "Cost of Referral" tile
+  const renderReferralCostTile = () => {
+    const courseReferralCosts = programs.map(p => {
+      const referralCostPerConversion = p.referrerIncentive + (p.cost * p.refereeDiscount / 100);
+      const totalReferralCost = referralCostPerConversion * p.converted;
+      const totalCourseCost = p.cost * p.converted;
+      const percentage = totalCourseCost > 0 ? (totalReferralCost / totalCourseCost * 100).toFixed(1) : 0;
+      return { name: p.name, referralCost: totalReferralCost, percentage };
+    });
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+        <div style={{ textAlign: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Total Cost of Referral</div>
+          <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--primary)' }}>{totalReferralData.percentage}%</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            ₹{totalReferralData.totalReferralCost.toLocaleString()} / ₹{totalReferralData.totalCourseRevenue.toLocaleString()}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {courseReferralCosts.map((item, index) => (
+            <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-main)' }}>{item.name}</span>
+              <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--primary)' }}>{item.percentage}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Render "Referral Cost Ratio by Course" pie chart
+  const renderReferralCostPieChart = () => {
+    const data = programs.map(p => {
+      const referralCostPerConversion = p.referrerIncentive + (p.cost * p.refereeDiscount / 100);
+      const totalReferralCost = referralCostPerConversion * p.converted;
+      return { name: p.name, value: totalReferralCost };
+    }).filter(d => d.value > 0);
+
+    const totalVal = data.reduce((sum, item) => sum + item.value, 0);
+    const colors = ["#514697", "#10b981", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#06b6d4"];
+
+    if (totalVal === 0) return <div style={{ color: 'var(--text-muted)' }}>No data available</div>;
+
+    let cumulativePercent = 0;
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '24px', justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
+        <svg viewBox="-1.2 -1.2 2.4 2.4" style={{ width: '150px', height: '150px', transform: 'rotate(-90deg)', flexShrink: 0 }}>
+          {data.map((item, index) => {
+            const percent = item.value / totalVal;
+            const [startX, startY] = getCoordinatesForPercent(cumulativePercent);
+            cumulativePercent += percent;
+            const [endX, endY] = getCoordinatesForPercent(cumulativePercent);
+            const largeArcFlag = percent > 0.5 ? 1 : 0;
+            const pathData = [`M 0 0`, `L ${startX} ${startY}`, `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`, `Z`].join(' ');
+
+            return (
+              <path
+                key={index}
+                d={pathData}
+                fill={colors[index % colors.length]}
+                stroke="#ffffff"
+                strokeWidth="0.02"
+                onClick={() => setView("reports")}
+                style={{ transition: 'opacity 0.2s ease', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+              />
+            );
+          })}
+          <circle cx="0" cy="0" r="0.5" fill="#ffffff" />
+        </svg>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {data.map((item, index) => (
+            <div
+              key={index}
+              onClick={() => setView("reports")}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}
+            >
+              <div style={{ width: '10px', height: '10px', backgroundColor: colors[index % colors.length], borderRadius: '2px' }}></div>
+              <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{item.name}</span>
+              <span style={{ color: 'var(--text-muted)' }}>(₹{(item.value / 1000).toFixed(0)}K - {Math.round((item.value / totalVal) * 100)}%)</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -165,34 +254,13 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Tile 3: Info Cards (4cols) */}
+        {/* Tile 3: Cost of Referral (4cols) — moved here from Reports > Visual Charts */}
         <div className="dashboard-card col-4-lg">
           <div className="card-header">
-            <div className="card-title">Info Overview</div>
+            <div className="card-title">Cost of Referral</div>
           </div>
-          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div className="info-row">
-                <div className="info-label"><IndianRupee size={16} /> Total Rewards Paid</div>
-                <div className="info-val">{formatCurrency(stats.rewardsPaid)}</div>
-              </div>
-              <div className="info-row">
-                <div className="info-label"><Users size={16} /> Total Leads</div>
-                <div className="info-val">{stats.leadsGenerated}</div>
-              </div>
-              <div className="info-row">
-                <div className="info-label"><UserCheck size={16} /> Enrolled</div>
-                <div className="info-val">{stats.admissionsConverted}</div>
-              </div>
-              <div className="info-row">
-                <div className="info-label"><AlertTriangle size={16} style={{ color: 'var(--danger)' }} /> Dropped</div>
-                <div className="info-val">{stats.dropOffs}</div>
-              </div>
-              <div className="info-row">
-                <div className="info-label"><FileText size={16} /> In Progress</div>
-                <div className="info-val">{stats.inProgress}</div>
-              </div>
-            </div>
+          <div className="card-body">
+            {renderReferralCostTile()}
           </div>
         </div>
 
@@ -231,84 +299,13 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Tile 5: Duplicate Leads Mini-Review (4cols - Cycles & Click to Tab) */}
-        <div 
-          className="dashboard-card col-4-lg card-clickable" 
-          onClick={() => setView("duplicate_leads")}
-        >
+        {/* Tile 5: Referral Cost Ratio by Course (4cols) — moved here from Reports > Visual Charts */}
+        <div className="dashboard-card col-4-lg">
           <div className="card-header">
-            <div className="card-title">Duplicate Leads Review</div>
-            <div className="carousel-arrows">
-              <button className="carousel-arrow-btn" onClick={handlePrevDuplicate} aria-label="Previous">
-                <ChevronLeft size={16} />
-              </button>
-              <button className="carousel-arrow-btn" onClick={handleNextDuplicate} aria-label="Next">
-                <ChevronRight size={16} />
-              </button>
-            </div>
+            <div className="card-title">Referral Cost Ratio by Course</div>
           </div>
-          
-          <div className="card-body" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {currentDup ? (
-              <div className="mini-review-container">
-                <div className="mini-review-header">
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-                    Review: {currentDup.name}
-                  </span>
-                  <span className={`badge badge-${currentDup.status.toLowerCase()}`}>
-                    {currentDup.status}
-                  </span>
-                </div>
-                
-                <div className="mini-comparison-grid">
-                  {/* Referral details */}
-                  <div className="mini-comparison-box">
-                    <div className="box-header-purple">
-                      <User size={12} /> New Referral
-                    </div>
-                    <div className="box-content-mini">
-                      <div className="mini-info-row">
-                        <span className="mini-info-label">Name</span>
-                        <span className="mini-info-val">{currentDup.name}</span>
-                      </div>
-                      <div className="mini-info-row">
-                        <span className="mini-info-label">Course</span>
-                        <span className="mini-info-val">{currentDup.course}</span>
-                      </div>
-                      <div className="mini-info-row">
-                        <span className="mini-info-label">By</span>
-                        <span className="mini-info-val">{currentDup.referredBy}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CRM details */}
-                  <div className="mini-comparison-box">
-                    <div className="box-header-red">
-                      <FileText size={12} /> {currentDup.crmMatchText}
-                    </div>
-                    <div className="box-content-mini">
-                      <div className="mini-info-row">
-                        <span className="mini-info-label">CRM Status</span>
-                        <span className="mini-info-val">{currentDup.crmStatus}</span>
-                      </div>
-                      <div className="mini-info-row">
-                        <span className="mini-info-label">First Seen</span>
-                        <span className="mini-info-val">{currentDup.crmFirstSeen}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>
-                No duplicate leads pending
-              </div>
-            )}
-            
-            <div style={{ marginTop: 'auto', textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
-              Click to open full Duplicate Leads Tab
-            </div>
+          <div className="card-body">
+            {renderReferralCostPieChart()}
           </div>
         </div>
 
