@@ -299,7 +299,7 @@ export default function Reports({ data }) {
     const data = chartData.map(d => ({ name: d.name, value: d.converted })).filter(d => d.value > 0);
     const totalVal = data.reduce((sum, item) => sum + item.value, 0);
     
-    const colors = ["#5c4ff2", "#10b981", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#06b6d4"];
+    const colors = ["#514697", "#10b981", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#06b6d4"];
 
     if (totalVal === 0) return <div style={{ color: 'var(--text-muted)' }}>No data available</div>;
 
@@ -357,7 +357,7 @@ export default function Reports({ data }) {
     }).filter(d => d.value > 0);
 
     const totalVal = data.reduce((sum, item) => sum + item.value, 0);
-    const colors = ["#5c4ff2", "#10b981", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#06b6d4"];
+    const colors = ["#514697", "#10b981", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#06b6d4"];
 
     if (totalVal === 0) return <div style={{ color: 'var(--text-muted)' }}>No data available</div>;
 
@@ -506,7 +506,7 @@ export default function Reports({ data }) {
     }).filter(d => d.value > 0);
 
     const totalVal = data.reduce((sum, item) => sum + item.value, 0);
-    const colors = ["#5c4ff2", "#10b981", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#06b6d4"];
+    const colors = ["#514697", "#10b981", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#06b6d4"];
 
     if (totalVal === 0) return <div style={{ color: 'var(--text-muted)' }}>No data available</div>;
 
@@ -1110,7 +1110,7 @@ export default function Reports({ data }) {
                       border: '1.5px solid rgba(239,68,68,0.35)',
                       borderRadius: '10px',
                       padding: '12px 14px',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      boxShadow: '0 8px 24px rgba(226,223,241,0.7)',
                       zIndex: 200
                     }}
                   >

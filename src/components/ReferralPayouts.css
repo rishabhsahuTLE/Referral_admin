@@ -66,7 +66,7 @@
   background: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(226, 223, 241, 0.7);
   /* force equal height */
   display: flex;
   flex-direction: column;
@@ -108,7 +108,7 @@
   background: white;
   border-radius: 8px;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(226, 223, 241, 0.7);
 }
 
 .tabs {
@@ -173,7 +173,7 @@
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(226, 223, 241, 0.7);
 }
 
 .data-table {
@@ -318,7 +318,7 @@
   text-align: left;
   padding: 10px 12px;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(226, 223, 241, 0.8);
   z-index: 2000;
   white-space: normal;
 }

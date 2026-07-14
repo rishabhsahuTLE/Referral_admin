@@ -1434,8 +1434,8 @@ Approved rewards will be credited to the bank account registered in the student 
             alignItems: 'center',
             gap: '10px',
             padding: '14px 20px',
-            backgroundColor: 'rgba(92,79,242,0.12)',
-            borderTop: '1px solid rgba(92,79,242,0.2)',
+            backgroundColor: 'rgba(81,70,151,0.12)',
+            borderTop: '1px solid rgba(81,70,151,0.2)',
           }}>
             <div className="sidebar-avatar" style={{ width: '32px', height: '32px', fontSize: '12px', flexShrink: 0 }}>AU</div>
             <div className="sidebar-user-info" style={{ flex: 1, minWidth: 0 }}>
@@ -1479,7 +1479,7 @@ Approved rewards will be credited to the bank account registered in the student 
           <div style={{
             backgroundColor: '#ffffff', borderRadius: '12px',
             padding: '32px', width: '480px', maxWidth: '90vw',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.25)'
+            boxShadow: '0 20px 60px rgba(226,223,241,0.8)'
           }}>
             <h3 style={{ fontWeight: '700', fontSize: '18px', color: 'var(--text-main)', marginBottom: '24px' }}>
               Add New Program

@@ -20,7 +20,7 @@
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(226, 223, 241, 0.8);
   overflow: hidden;
 }
 
@@ -98,7 +98,7 @@
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 10px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 28px rgba(226, 223, 241, 0.7);
   z-index: 50;
   padding: 12px;
   max-height: 320px;
