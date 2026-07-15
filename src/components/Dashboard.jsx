@@ -6,7 +6,7 @@ import {
   Copy
 } from "lucide-react";
 
-export default function Dashboard({ data, setView }) {
+export default function Dashboard({ data, setView, onNavigateToRefereeReport }) {
   const { stats, programs, referrers, reports } = data;
 
   // Calculate overall conversion rate
@@ -114,7 +114,7 @@ export default function Dashboard({ data, setView }) {
                 fill={colors[index % colors.length]}
                 stroke="#ffffff"
                 strokeWidth="0.02"
-                onClick={() => setView("reports")}
+                onClick={() => onNavigateToRefereeReport(item.name)}
                 style={{ transition: 'opacity 0.2s ease', cursor: 'pointer' }}
                 onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
                 onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
@@ -123,17 +123,19 @@ export default function Dashboard({ data, setView }) {
           })}
           <circle cx="0" cy="0" r="0.5" fill="#ffffff" />
         </svg>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {data.map((item, index) => (
-            <div
+            <button
               key={index}
-              onClick={() => setView("reports")}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}
+              onClick={() => onNavigateToRefereeReport(item.name)}
+              className="report-link-btn"
+              title={`View referees enrolled in ${item.name}`}
+              style={{ justifyContent: 'flex-start', gap: '8px', fontSize: '12px' }}
             >
-              <div style={{ width: '10px', height: '10px', backgroundColor: colors[index % colors.length], borderRadius: '2px' }}></div>
-              <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{item.name}</span>
-              <span style={{ color: 'var(--text-muted)' }}>(₹{(item.value / 1000).toFixed(0)}K - {Math.round((item.value / totalVal) * 100)}%)</span>
-            </div>
+              <span style={{ width: '10px', height: '10px', flexShrink: 0, backgroundColor: colors[index % colors.length], borderRadius: '2px' }}></span>
+              <span style={{ fontWeight: '600' }}>{item.name}</span>
+              <span>(₹{(item.value / 1000).toFixed(0)}K - {Math.round((item.value / totalVal) * 100)}%)</span>
+            </button>
           ))}
         </div>
       </div>

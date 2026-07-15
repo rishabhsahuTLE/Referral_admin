@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Download, TrendingUp } from "lucide-react";
 import { downloadCSV } from "../utils/csv";
 
-export default function Reports({ data }) {
+export default function Reports({ data, initialRefereeCourse, onConsumeDeepLink }) {
   const [activeSubTab, setActiveSubTab] = useState("referrer_report");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("All");
@@ -10,6 +10,11 @@ export default function Reports({ data }) {
   // Referee report state
   const [refereeSearchTerm, setRefereeSearchTerm] = useState("");
   const [selectedRefereeCourse, setSelectedRefereeCourse] = useState("All");
+  // Set only via clicks elsewhere (referrer name/count/enrolled/in-progress/dropped cells,
+  // column headers, or the Dashboard's course chart) — there's no manual control for these,
+  // just the filter-chip bar that lets the admin clear them.
+  const [refereeReferrerFilter, setRefereeReferrerFilter] = useState(null);
+  const [refereeStatusFilter, setRefereeStatusFilter] = useState("All");
 
   const { reports, refereeReports = [], programs, stats } = data;
 
@@ -23,6 +28,35 @@ export default function Reports({ data }) {
     referrerCourseMap[dl.referredBy].add(dl.course);
   });
 
+  // Consume a one-shot deep link from the Dashboard's "Referral Cost Ratio by Course"
+  // chart: jump straight to Referee Report with that course pre-selected, then tell the
+  // parent to clear it so a later, unrelated visit to Reports doesn't replay it.
+  useEffect(() => {
+    if (initialRefereeCourse) {
+      setSelectedRefereeCourse(initialRefereeCourse);
+      setActiveSubTab("referee_report");
+      onConsumeDeepLink?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Navigate to Referee Report, optionally filtered by referrer name and/or funnel status.
+  // Always resets the course filter too — otherwise a stale course selection from an
+  // earlier, unrelated visit (e.g. the Dashboard's course-chart deep link) would silently
+  // narrow these referrer/status-based results down to almost nothing.
+  const goToRefereeReport = ({ referrerName = null, applicationStatus = "All" } = {}) => {
+    setRefereeReferrerFilter(referrerName);
+    setRefereeStatusFilter(applicationStatus);
+    setRefereeSearchTerm("");
+    setSelectedRefereeCourse("All");
+    setActiveSubTab("referee_report");
+  };
+
+  const clearRefereeFilters = () => {
+    setRefereeReferrerFilter(null);
+    setRefereeStatusFilter("All");
+  };
+
   // Filter reports list based on search term and selected course
   const filteredReports = reports.filter(rep => {
     const matchesSearch =
@@ -34,15 +68,17 @@ export default function Reports({ data }) {
     return courses && courses.has(selectedCourse);
   });
 
-  // Filter referee reports by search + selected course (referee course)
+  // Filter referee reports by search + selected course + referrer/status drill-down filters
   const filteredRefereeReports = refereeReports.filter(rep => {
     const matchesSearch =
       rep.refereeName.toLowerCase().includes(refereeSearchTerm.toLowerCase()) ||
       rep.refereeEnrollNo.toLowerCase().includes(refereeSearchTerm.toLowerCase()) ||
       rep.referrerName.toLowerCase().includes(refereeSearchTerm.toLowerCase());
     if (!matchesSearch) return false;
-    if (selectedRefereeCourse === "All") return true;
-    return rep.refereeCourse === selectedRefereeCourse;
+    if (selectedRefereeCourse !== "All" && rep.refereeCourse !== selectedRefereeCourse) return false;
+    if (refereeReferrerFilter && rep.referrerName !== refereeReferrerFilter) return false;
+    if (refereeStatusFilter !== "All" && rep.applicationStatus !== refereeStatusFilter) return false;
+    return true;
   });
 
   // Download whatever is currently previewed in the Referrer Report table
@@ -222,9 +258,27 @@ export default function Reports({ data }) {
                   <th>Student</th>
                   <th>Enrollment No</th>
                   <th>No. of Referrals</th>
-                  <th>Enrolled</th>
-                  <th>In Progress</th>
-                  <th>Dropped</th>
+                  <th
+                    className="report-link-th"
+                    onClick={() => goToRefereeReport({ applicationStatus: "Enrolled" })}
+                    title="View all enrolled referees"
+                  >
+                    Enrolled
+                  </th>
+                  <th
+                    className="report-link-th"
+                    onClick={() => goToRefereeReport({ applicationStatus: "In Progress" })}
+                    title="View all in-progress referees"
+                  >
+                    In Progress
+                  </th>
+                  <th
+                    className="report-link-th"
+                    onClick={() => goToRefereeReport({ applicationStatus: "Dropped" })}
+                    title="View all dropped referees"
+                  >
+                    Dropped
+                  </th>
                   <th>Conversion Rate</th>
                   <th>Status</th>
                 </tr>
@@ -243,13 +297,54 @@ export default function Reports({ data }) {
                   return (
                     <tr key={idx}>
                       <td>
-                        <div className="student-name">{rep.student}</div>
+                        <button
+                          className="report-link-btn"
+                          onClick={() => goToRefereeReport({ referrerName: rep.student })}
+                          title={`View all students referred by ${rep.student}`}
+                        >
+                          {rep.student}
+                        </button>
                       </td>
                       <td style={{ color: "var(--text-muted)" }}>{rep.enrollmentNo}</td>
-                      <td style={{ fontWeight: '600' }}>{rep.submitted}</td>
-                      <td style={{ fontWeight: '600', color: 'var(--success-text)' }}>{rep.converted}</td>
-                      <td style={{ fontWeight: '600', color: 'var(--warning-text)' }}>{inProgressCount}</td>
-                      <td style={{ fontWeight: '600', color: 'var(--danger-text)' }}>{droppedCount}</td>
+                      <td>
+                        <button
+                          className="report-link-btn"
+                          onClick={() => goToRefereeReport({ referrerName: rep.student })}
+                          title={`View all students referred by ${rep.student}`}
+                        >
+                          {rep.submitted}
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          className="report-link-btn"
+                          onClick={() => goToRefereeReport({ referrerName: rep.student, applicationStatus: "Enrolled" })}
+                          title={`View ${rep.student}'s enrolled referees`}
+                          style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success-text)' }}
+                        >
+                          {rep.converted}
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          className="report-link-btn"
+                          onClick={() => goToRefereeReport({ referrerName: rep.student, applicationStatus: "In Progress" })}
+                          title={`View ${rep.student}'s in-progress referees`}
+                          style={{ backgroundColor: 'var(--warning-bg)', color: 'var(--warning-text)' }}
+                        >
+                          {inProgressCount}
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          className="report-link-btn"
+                          onClick={() => goToRefereeReport({ referrerName: rep.student, applicationStatus: "Dropped" })}
+                          title={`View ${rep.student}'s dropped referees`}
+                          style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)' }}
+                        >
+                          {droppedCount}
+                        </button>
+                      </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div className="prog-progress-container" style={{ width: '80px', marginBottom: '0' }}>
@@ -359,6 +454,25 @@ export default function Reports({ data }) {
             </button>
           </div>
 
+          {(refereeReferrerFilter || refereeStatusFilter !== "All") && (
+            <div className="report-filter-bar">
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Filtered by:</span>
+              {refereeReferrerFilter && (
+                <span className="report-filter-chip">
+                  Referrer: {refereeReferrerFilter}
+                  <button onClick={() => setRefereeReferrerFilter(null)} aria-label="Clear referrer filter">×</button>
+                </span>
+              )}
+              {refereeStatusFilter !== "All" && (
+                <span className="report-filter-chip">
+                  Status: {refereeStatusFilter}
+                  <button onClick={() => setRefereeStatusFilter("All")} aria-label="Clear status filter">×</button>
+                </span>
+              )}
+              <button className="report-filter-clear-btn" onClick={clearRefereeFilters}>Clear all</button>
+            </div>
+          )}
+
           <div className="table-container">
             <table className="custom-table">
               <thead>
@@ -406,9 +520,9 @@ export default function Reports({ data }) {
                           ● In Progress
                         </span>
                       )}
-                      {rep.applicationStatus === 'Flagged' && (
+                      {rep.applicationStatus === 'Dropped' && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                          ● Flagged
+                          ● Dropped
                         </span>
                       )}
                     </td>

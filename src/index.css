@@ -778,6 +778,86 @@ button, input, select, textarea {
   color: var(--text-main);
 }
 
+/* Clickable report cells/headers that drill into another view — styled to
+   read as buttons rather than plain text/labels. */
+.report-link-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.report-link-btn:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.report-link-th {
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.report-link-th:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.report-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.report-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.report-filter-chip button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.report-filter-clear-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.report-filter-clear-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 /* Badge System */
 .badge {
   display: inline-flex;

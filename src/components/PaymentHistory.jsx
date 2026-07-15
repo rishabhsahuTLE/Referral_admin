@@ -1,46 +1,73 @@
 import React from 'react';
 import './PaymentHistory.css';
 
-function PaymentHistory({ university }) {
-  const mockPayments = [
-    {
-      id: 1,
-      datePaid: '18 May 2028',
-      student: 'Vikash Deboral',
-      referrer: 'Kavya Iyer',
-      course: 'MBA Marketing',
-      courseUniversity: 'Delhi University',
-      amount: '₹5,000',
-      siteReference: 'LY65T37HC51',
-    },
-    {
-      id: 2,
-      datePaid: '18 May 2028',
-      student: 'Arjun Marwai',
-      referrer: 'Kavya Iyer',
-      course: 'MBA Marketing',
-      courseUniversity: 'Delhi University',
-      amount: '₹5,000',
-      siteReference: 'LY65T37T641',
-    },
-  ];
+// Builds the payment ledger from this university's own referee/programme data instead of
+// disconnected placeholder names, so the numbers here reconcile with Reports and Referral
+// Payouts rather than referencing students/universities that don't exist anywhere else.
+function buildPaymentLedger(data) {
+  const { refereeReports = [], programs = [], name: universityName } = data;
+
+  const incentiveByCourse = {};
+  programs.forEach((p) => {
+    incentiveByCourse[p.name] = p.referrerIncentive;
+  });
+
+  const daysAgoOptions = [4, 9, 14, 19, 24, 29];
+
+  return refereeReports
+    .filter((r) => r.applicationStatus === 'Enrolled')
+    .slice(0, 6)
+    .map((r, i) => {
+      const daysAgo = daysAgoOptions[i % daysAgoOptions.length];
+      const datePaid = new Date(Date.now() - daysAgo * 86400000).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      const amountValue = incentiveByCourse[r.refereeCourse] ?? 5000;
+
+      return {
+        id: i + 1,
+        datePaid,
+        student: r.refereeName,
+        referrer: r.referrerName,
+        course: r.refereeCourse,
+        courseUniversity: universityName,
+        amountValue,
+        amount: `₹${amountValue.toLocaleString('en-IN')}`,
+        siteReference: `UTR${new Date().getFullYear()}${String(1000 + i * 37)}X`,
+      };
+    });
+}
+
+function PaymentHistory({ data }) {
+  const payments = buildPaymentLedger(data);
+
+  const totalDisbursed = payments.reduce((sum, p) => sum + p.amountValue, 0);
+  const now = new Date();
+  const thisMonthTotal = payments
+    .filter((p) => {
+      const [, monStr, yr] = p.datePaid.split(' ');
+      return `${monStr} ${yr}` === now.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+    })
+    .reduce((sum, p) => sum + p.amountValue, 0);
 
   return (
     <div className="payment-history">
       <div className="payment-summary">
         <div className="summary-box">
           <label>Total Disbursed</label>
-          <span className="summary-amount">₹10,000</span>
+          <span className="summary-amount">₹{totalDisbursed.toLocaleString('en-IN')}</span>
           <p>To date</p>
         </div>
         <div className="summary-box">
           <label>This Month</label>
-          <span className="summary-amount">₹10,000</span>
-          <p>May 2026</p>
+          <span className="summary-amount">₹{thisMonthTotal.toLocaleString('en-IN')}</span>
+          <p>{now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
         </div>
         <div className="summary-box">
           <label>Payments Made</label>
-          <span className="summary-amount">2</span>
+          <span className="summary-amount">{payments.length}</span>
           <p>Recent transactions</p>
         </div>
       </div>
@@ -60,7 +87,7 @@ function PaymentHistory({ university }) {
               </tr>
             </thead>
             <tbody>
-              {mockPayments.map((payment) => (
+              {payments.map((payment) => (
                 <tr key={payment.id}>
                   <td>{payment.datePaid}</td>
                   <td className="student-name">{payment.student}</td>
@@ -76,6 +103,13 @@ function PaymentHistory({ university }) {
                   <td className="reference">{payment.siteReference}</td>
                 </tr>
               ))}
+              {payments.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
+                    No payments recorded yet for this university.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

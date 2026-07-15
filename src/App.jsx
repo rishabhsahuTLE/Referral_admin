@@ -37,6 +37,14 @@ export default function App() {
   const [view, setView] = useState("dashboard");
   const [activeDuplicateIndex, setActiveDuplicateIndex] = useState(0);
 
+  // One-shot deep link: set by Dashboard's "Referral Cost Ratio by Course" chart so
+  // Reports opens straight into Referee Report with that course pre-selected.
+  const [reportsDeepLinkCourse, setReportsDeepLinkCourse] = useState(null);
+  const navigateToRefereeReportForCourse = (courseName) => {
+    setReportsDeepLinkCourse(courseName);
+    setView("reports");
+  };
+
   // Notification Log state
   const [notifChannelFilter, setNotifChannelFilter] = useState("All Channels");
   const [notifStatusFilter, setNotifStatusFilter] = useState("All Statuses");
@@ -209,15 +217,20 @@ Approved rewards will be credited to the bank account registered in the student 
     switch (view) {
       case "dashboard":
         return (
-          <Dashboard 
-            data={currentUniData} 
-            setView={setView} 
-            activeDuplicateIndex={activeDuplicateIndex}
-            setActiveDuplicateIndex={setActiveDuplicateIndex}
+          <Dashboard
+            data={currentUniData}
+            setView={setView}
+            onNavigateToRefereeReport={navigateToRefereeReportForCourse}
           />
         );
       case "reports":
-        return <Reports data={currentUniData} />;
+        return (
+          <Reports
+            data={currentUniData}
+            initialRefereeCourse={reportsDeepLinkCourse}
+            onConsumeDeepLink={() => setReportsDeepLinkCourse(null)}
+          />
+        );
       case "duplicate_leads":
         return (
           <DuplicateLeads 
@@ -239,7 +252,7 @@ Approved rewards will be credited to the bank account registered in the student 
         return <ReferralPayouts university={currentUniData.name} />;
 
       case "payment_history":
-        return <PaymentHistory university={currentUniData.name} />;
+        return <PaymentHistory data={currentUniData} />;
 
       case "policy_content": {
         // live version = last entry with live:true
