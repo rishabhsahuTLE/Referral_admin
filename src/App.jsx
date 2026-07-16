@@ -25,7 +25,8 @@ import {
   Info,
   Search
 } from "lucide-react";
-import { initialUniversityData, COURSE_POOL, buildInitialPayoutRecords } from "./mockData";
+import { initialUniversityData, COURSE_POOL, COURSE_COST_MAP, buildInitialPayoutRecords } from "./mockData";
+import ComprehensiveReport from "./components/ComprehensiveReport";
 import Dashboard from "./components/Dashboard";
 import Reports from "./components/Reports";
 import DuplicateLeads from "./components/DuplicateLeads";
@@ -112,7 +113,7 @@ Approved rewards will be credited to the bank account registered in the student 
   // options of the selected UG/PG type, minus courses this university already has
   // configured below and minus courses already picked in this modal session.
   const existingCourseNames = new Set(currentUniData.programs.map(p => p.name.toLowerCase()));
-  const selectedCourseNamesLower = new Set(selectedCourses.map(c => c.toLowerCase()));
+  const selectedCourseNamesLower = new Set(selectedCourses.map(c => c.name.toLowerCase()));
   const candidateCourses = (COURSE_POOL[programType] || []).filter(
     c => !existingCourseNames.has(c.toLowerCase()) && !selectedCourseNamesLower.has(c.toLowerCase())
   );
@@ -271,18 +272,20 @@ Approved rewards will be credited to the bank account registered in the student 
       return;
     }
 
-    const newPrograms = selectedCourses.map((courseName) => ({
-      name: courseName,
+    const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    const newPrograms = selectedCourses.map(({ name, cost }) => ({
+      name,
       type: programType,
-      cost: 0,
+      cost,
       referralPercent: 0,
       referrerIncentive: parseInt(referrerIncentive, 10) || 0,
       refereeDiscount: parseFloat(refereeDiscount) || 0,
       effectiveFrom: formatEffectiveDate(effectiveFrom),
       effectiveTo: formatEffectiveDate(effectiveTo),
       feeHead,
-      lastModifiedBy: "-",
-      lastModifiedOn: "-",
+      lastModifiedBy: "Admin User",
+      lastModifiedOn: today,
       converted: 0,
       leads: 0,
       flagged: 0,
@@ -305,6 +308,9 @@ Approved rewards will be credited to the bank account registered in the student 
   // Render sub-views
   const renderContent = () => {
     switch (view) {
+      case "comprehensive_report":
+        return <ComprehensiveReport uniData={uniData} payoutRecords={payoutRecords} />;
+
       case "dashboard":
         return (
           <Dashboard
@@ -1359,6 +1365,7 @@ Approved rewards will be credited to the bank account registered in the student 
 
   const getPageTitle = () => {
     switch (view) {
+      case "comprehensive_report": return "Comprehensive Report";
       case "dashboard": return "Dashboard";
       case "reports": return "Reports";
       case "duplicate_leads": return "Duplicate Leads";
@@ -1408,7 +1415,19 @@ Approved rewards will be credited to the bank account registered in the student 
           {/* Navigation Items (removed Course Benefits) */}
           <ul className="sidebar-menu">
             <li>
-              <a 
+              <a
+                className={`sidebar-item ${view === "comprehensive_report" ? "active" : ""}`}
+                onClick={() => setView("comprehensive_report")}
+              >
+                <div className="sidebar-item-left">
+                  <BarChart3 size={18} />
+                  <span>Comprehensive Report</span>
+                </div>
+              </a>
+            </li>
+
+            <li>
+              <a
                 className={`sidebar-item ${view === "dashboard" ? "active" : ""}`}
                 onClick={() => setView("dashboard")}
               >
@@ -1418,7 +1437,7 @@ Approved rewards will be credited to the bank account registered in the student 
                 </div>
               </a>
             </li>
-            
+
             <li>
               <a 
                 className={`sidebar-item ${view === "reports" ? "active" : ""}`}
@@ -1640,17 +1659,22 @@ Approved rewards will be credited to the bank account registered in the student 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
                     {selectedCourses.map(c => (
                       <div
-                        key={c}
+                        key={c.name}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '8px 12px', border: '1.5px solid #ddd', borderRadius: '8px', fontSize: '14px'
                         }}
                       >
-                        <span>{c}</span>
+                        <span>
+                          {c.name}
+                          <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                            ₹{c.cost.toLocaleString('en-IN')} cost (autofilled)
+                          </span>
+                        </span>
                         <button
                           type="button"
-                          onClick={() => setSelectedCourses(prev => prev.filter(x => x !== c))}
-                          aria-label={`Remove ${c}`}
+                          onClick={() => setSelectedCourses(prev => prev.filter(x => x.name !== c.name))}
+                          aria-label={`Remove ${c.name}`}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', display: 'flex' }}
                         >
                           <X size={14} />
@@ -1699,15 +1723,21 @@ Approved rewards will be credited to the bank account registered in the student 
                           <div
                             key={c}
                             onClick={() => {
-                              setSelectedCourses(prev => [...prev, c]);
+                              setSelectedCourses(prev => [...prev, { name: c, cost: COURSE_COST_MAP[c] ?? 0 }]);
                               setCourseSearchOpen(false);
                               setCourseSearchTerm("");
                             }}
-                            style={{ padding: '9px 14px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f2f2f2' }}
+                            style={{
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                              padding: '9px 14px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f2f2f2'
+                            }}
                             onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                           >
-                            {c}
+                            <span>{c}</span>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              ₹{(COURSE_COST_MAP[c] ?? 0).toLocaleString('en-IN')}
+                            </span>
                           </div>
                         ))
                       ) : (

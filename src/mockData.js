@@ -23,6 +23,21 @@ function generateRefereeName(seed) {
   return `${first} ${last}`;
 }
 
+const DROP_REASONS = [
+  "Chose another university",
+  "Financial constraints",
+  "Lost interest",
+  "Admission requirements not met",
+  "Delayed response from applicant",
+];
+
+function generateLeadDate(seed) {
+  const daysAgo = 5 + ((seed * 13) % 90);
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 // Pool of course names an admin can pick from in the "Add Course" flow, before any
 // university-specific filtering (already-added courses are excluded per-university).
 export const COURSE_POOL = {
@@ -36,6 +51,41 @@ export const COURSE_POOL = {
     "M.Tech Biotechnology", "M.Tech Civil", "MA English", "M.Sc Mathematics", "M.Sc Physics",
     "M.Com", "PhD Physics", "PhD Chemistry",
   ],
+};
+
+// Catalog cost for each pool course, so the Add-course modal can autofill "Course Cost"
+// the moment a course is picked, instead of the admin having to type it (or it silently
+// defaulting to 0).
+export const COURSE_COST_MAP = {
+  "B.Tech CSE": 180000,
+  "B.Tech AI/ML": 190000,
+  "B.Tech ECE": 150000,
+  "B.Tech Mechanical": 170000,
+  "B.Tech Electrical": 165000,
+  "B.Tech Civil": 155000,
+  "B.Tech Data Science": 200000,
+  "B.Sc Data Science": 95000,
+  "B.Sc Physics": 80000,
+  "B.Sc Chemistry": 82000,
+  "B.Sc Mathematics": 78000,
+  "BCA": 90000,
+  "BBA": 100000,
+  "B.Com": 70000,
+  "BA English": 60000,
+  "MBA Finance": 200000,
+  "MBA Marketing": 190000,
+  "MBA HR": 180000,
+  "MCA": 120000,
+  "M.Tech AI & ML": 160000,
+  "M.Tech Power Systems": 150000,
+  "M.Tech Biotechnology": 140000,
+  "M.Tech Civil": 145000,
+  "MA English": 70000,
+  "M.Sc Mathematics": 85000,
+  "M.Sc Physics": 88000,
+  "M.Com": 75000,
+  "PhD Physics": 120000,
+  "PhD Chemistry": 125000,
 };
 
 // Fills in the newer Reward Master columns (effective-to, fee head, last-modified audit
@@ -232,6 +282,8 @@ function generateRefereeReports(reportsList, courseNames, idPrefix) {
         inProcess: applicationStatus === "In Progress" ? 1 : 0,
         // Sprinkle in an occasional fraud flag for variety/testing, independent of funnel stage.
         status: globalIndex % 9 === 0 ? "Flagged" : "Clear",
+        leadDate: generateLeadDate(globalIndex),
+        dropReason: applicationStatus === "Dropped" ? DROP_REASONS[globalIndex % DROP_REASONS.length] : null,
       });
     });
   });

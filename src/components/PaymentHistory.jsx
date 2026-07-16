@@ -1,36 +1,11 @@
 import React from 'react';
 import { FiDownload } from 'react-icons/fi';
 import { downloadCSV } from '../utils/csv';
+import { buildPaidPayoutRows } from '../utils/paymentHistoryRows';
 import './PaymentHistory.css';
 
-// Only paid payout records show up here — each row pairs the referrer (who got paid)
-// with the referee (whose enrollment triggered the payout), sourced from the same
-// records Referral Payouts operates on so the two tabs never disagree.
-function buildPaidRows(payoutRecords, programs) {
-  const discountByCourse = {};
-  programs.forEach((p) => {
-    discountByCourse[p.name] = p.refereeDiscount;
-  });
-
-  return payoutRecords
-    .filter((item) => item.status === 'Payment Done' && item.paymentInfo)
-    .map((item) => ({
-      id: item.id,
-      referrerName: item.referrer,
-      referrerCourse: item.referrerCourse,
-      referrerEnrollNo: item.referrerId,
-      paymentAmount: item.amount,
-      datePaid: item.paymentInfo.date,
-      refereeName: item.student,
-      refereeCourse: item.course,
-      refereeEnrollNo: item.studentId,
-      discountPct: discountByCourse[item.course] ?? 0,
-      enrolledDate: item.enrolledDate,
-    }));
-}
-
 function PaymentHistory({ data, payoutRecords = [] }) {
-  const rows = buildPaidRows(payoutRecords, data.programs);
+  const rows = buildPaidPayoutRows(payoutRecords, data.programs);
 
   const totalDisbursed = payoutRecords
     .filter((item) => item.status === 'Payment Done')

@@ -121,7 +121,8 @@
 .table-container {
   background: white;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   box-shadow: 0 2px 8px rgba(226, 223, 241, 0.7);
 }
 
