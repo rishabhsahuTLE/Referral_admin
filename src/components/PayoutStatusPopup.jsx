@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FiCheckCircle, FiAlertTriangle, FiSend, FiX } from 'react-icons/fi';
+import { DEFAULT_NUDGE_MESSAGE } from '../mockData';
 import './PayoutStatusPopup.css';
 
-export const DEFAULT_NUDGE_MESSAGE = 'Bank details are not available.';
 const NUDGE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 1 day
 
 export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, onMarkBankPending, onNudge }) {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [referenceId, setReferenceId] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+  const [utrNumber, setUtrNumber] = useState('');
+  const [remarks, setRemarks] = useState('');
   const [formError, setFormError] = useState('');
 
   const [nudgeMessage, setNudgeMessage] = useState(DEFAULT_NUDGE_MESSAGE);
@@ -21,7 +23,9 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
   // Reset all local state whenever a (possibly different) record's popup opens.
   useEffect(() => {
     setShowPaymentForm(false);
-    setReferenceId('');
+    setTransactionId('');
+    setUtrNumber('');
+    setRemarks('');
     setFormError('');
     setNudgeMessage(item?.nudge?.message || DEFAULT_NUDGE_MESSAGE);
     setIsShaking(false);
@@ -52,11 +56,15 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
   };
 
   const confirmPaymentDone = () => {
-    if (!referenceId.trim()) {
-      setFormError('Reference ID is required.');
+    if (!transactionId.trim()) {
+      setFormError('Transaction ID is required.');
       return;
     }
-    onMarkPaymentDone(item.id, referenceId.trim());
+    onMarkPaymentDone(item.id, {
+      transactionId: transactionId.trim(),
+      utrNumber: utrNumber.trim(),
+      remarks: remarks.trim(),
+    });
     onClose();
   };
 
@@ -103,9 +111,15 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
                 <FiCheckCircle size={16} /> Payment Done
               </div>
               <div className="payout-status-done-summary-row">
-                <span>Reference ID</span>
-                <strong>{item.paymentInfo.referenceId}</strong>
+                <span>Transaction ID</span>
+                <strong>{item.paymentInfo.transactionId}</strong>
               </div>
+              {item.paymentInfo.utrNumber && (
+                <div className="payout-status-done-summary-row">
+                  <span>UTR Number</span>
+                  <strong>{item.paymentInfo.utrNumber}</strong>
+                </div>
+              )}
               <div className="payout-status-done-summary-row">
                 <span>Date</span>
                 <strong>{item.paymentInfo.date}</strong>
@@ -160,27 +174,46 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
           {showPaymentForm && (
             <div className="payout-status-form">
               <div className="payout-status-field">
-                <label>Reference ID</label>
+                <label>Name</label>
+                <input type="text" className="payout-status-input-readonly" value="Rishabh Sahu" readOnly />
+              </div>
+              <div className="payout-status-field">
+                <label>Number</label>
+                <input type="text" className="payout-status-input-readonly" value="+91 98765 43210" readOnly />
+              </div>
+              <div className="payout-status-hint">Name and number are recorded automatically.</div>
+              <div className="payout-status-field">
+                <label>Transaction ID</label>
                 <input
                   type="text"
                   className="payout-status-input"
                   placeholder="e.g. TXN-2026-00931"
-                  value={referenceId}
+                  value={transactionId}
                   onChange={(e) => {
-                    setReferenceId(e.target.value);
+                    setTransactionId(e.target.value);
                     setFormError('');
                   }}
                 />
               </div>
               <div className="payout-status-field">
-                <label>POC Name</label>
-                <input type="text" className="payout-status-input-readonly" value="Rishabh Sahu" readOnly />
+                <label>UTR Number (optional)</label>
+                <input
+                  type="text"
+                  className="payout-status-input"
+                  placeholder="e.g. UTR2026041700931"
+                  value={utrNumber}
+                  onChange={(e) => setUtrNumber(e.target.value)}
+                />
               </div>
               <div className="payout-status-field">
-                <label>POC Phone Number</label>
-                <input type="text" className="payout-status-input-readonly" value="+91 98765 43210" readOnly />
+                <label>Remarks (optional)</label>
+                <textarea
+                  className="payout-status-input payout-status-textarea"
+                  placeholder="Any additional notes about this payment..."
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                />
               </div>
-              <div className="payout-status-hint">POC name and number are recorded automatically.</div>
               {formError && <div className="payout-status-error">{formError}</div>}
               <div className="payout-status-form-actions">
                 <button className="payout-status-cancel-btn" onClick={() => setShowPaymentForm(false)}>

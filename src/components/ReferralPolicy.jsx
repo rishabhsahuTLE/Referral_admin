@@ -1,25 +1,28 @@
 import React, { useState } from "react";
 import { Search, Edit, Save, X, Info, ArrowUpDown, ChevronDown } from "lucide-react";
 
+const FEE_HEAD_OPTIONS = ["Tuition Fees", "Examination Fees", "Registration Fee"];
+
 export default function ReferralPolicy({ data, onUpdatePolicy }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingRowIdx, setEditingRowIdx] = useState(null);
-  
+
   // Sorting state
-  const [sortField, setSortField] = useState("none"); // none, cost, referralPercent, effectiveFrom
+  const [sortField, setSortField] = useState("none"); // none, cost, effectiveFrom
   const [sortOrder, setSortOrder] = useState("asc"); // asc, desc
 
   // Local state for inline edits
   const [editCost, setEditCost] = useState("");
-  const [editPercent, setEditPercent] = useState("");
   const [editReferrer, setEditReferrer] = useState("");
   const [editReferee, setEditReferee] = useState("");
   const [editEffective, setEditEffective] = useState("");
+  const [editEffectiveTo, setEditEffectiveTo] = useState("");
+  const [editFeeHead, setEditFeeHead] = useState(FEE_HEAD_OPTIONS[0]);
 
   const { programs } = data;
 
   // Filter programs based on search term
-  const filteredPrograms = programs.filter(p => 
+  const filteredPrograms = programs.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -57,44 +60,26 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
   const startEdit = (idx, prog) => {
     setEditingRowIdx(idx);
     setEditCost(prog.cost);
-    setEditPercent(prog.referralPercent);
     setEditReferrer(prog.referrerIncentive);
     setEditReferee(prog.refereeDiscount); // This is a percentage e.g. 10
     setEditEffective(prog.effectiveFrom);
+    setEditEffectiveTo(prog.effectiveTo && prog.effectiveTo !== "-" ? prog.effectiveTo : "");
+    setEditFeeHead(prog.feeHead && FEE_HEAD_OPTIONS.includes(prog.feeHead) ? prog.feeHead : FEE_HEAD_OPTIONS[0]);
   };
 
   const cancelEdit = () => {
     setEditingRowIdx(null);
   };
 
-  const handleCostChange = (val) => {
-    const cost = parseFloat(val) || 0;
-    setEditCost(val);
-    // Recalculate default incentives if we have a percent
-    const pct = parseFloat(editPercent) || 0;
-    const totalReward = (cost * pct) / 100;
-    setEditReferrer(Math.round(totalReward / 2));
-    
-    // Also suggest referee discount percentage if needed, but referee is edited as percentage now.
-    // Let's keep referee discount percentage default (e.g. 10%) or recalculate if desired.
-  };
-
-  const handlePercentChange = (val) => {
-    const pct = parseFloat(val) || 0;
-    setEditPercent(val);
-    const cost = parseFloat(editCost) || 0;
-    const totalReward = (cost * pct) / 100;
-    setEditReferrer(Math.round(totalReward / 2));
-  };
-
   const saveEdit = (progName) => {
     const updatedProg = {
       name: progName,
       cost: parseFloat(editCost) || 0,
-      referralPercent: parseFloat(editPercent) || 0,
       referrerIncentive: parseFloat(editReferrer) || 0,
       refereeDiscount: parseFloat(editReferee) || 0, // saved as percentage
-      effectiveFrom: editEffective
+      effectiveFrom: editEffective,
+      effectiveTo: editEffectiveTo.trim() || "-",
+      feeHead: editFeeHead,
     };
     onUpdatePolicy(updatedProg);
     setEditingRowIdx(null);
@@ -117,12 +102,12 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
+
       {/* Information Banner */}
       <div className="policy-banner">
         <Info className="policy-icon" size={18} />
         <div>
-          <strong>Reward Settings Control.</strong> You can search and edit program costs, referrer incentives, and referee discounts. Click column headers or use the sort dropdown to organize records by cost, referral percentage, or effective dates.
+          <strong>Reward Settings Control.</strong> You can search and edit course costs, referrer incentives, and referee discounts. Click column headers or use the sort dropdown to organize records by cost or effective dates.
         </div>
       </div>
 
@@ -150,24 +135,24 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-main)' }}>
-            Reward Master — by Programme
+            Reward Master — by Course
           </h2>
-          
+
           {/* Search bar & Sort Dropdown */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
             <div className="search-bar-container" style={{ marginBottom: 0 }}>
               <Search size={16} className="search-icon" />
-              <input 
-                type="text" 
-                className="search-input" 
-                placeholder="Search program..." 
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search course..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
+
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <select 
+              <select
                 className="search-input"
                 style={{ paddingRight: '32px', minWidth: '180px', cursor: 'pointer', backgroundColor: '#ffffff' }}
                 value={`${sortField}-${sortOrder}`}
@@ -180,8 +165,6 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
                 <option value="none-asc">Sort: Default</option>
                 <option value="cost-asc">Cost: Lowest First</option>
                 <option value="cost-desc">Cost: Highest First</option>
-                <option value="referralPercent-asc">Referral %: Lowest First</option>
-                <option value="referralPercent-desc">Referral %: Highest First</option>
                 <option value="effectiveFrom-asc">Effective Date: Lowest First</option>
                 <option value="effectiveFrom-desc">Effective Date: Highest First</option>
               </select>
@@ -194,21 +177,29 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
           <table className="custom-table">
             <thead>
               <tr>
-                <th>Programme</th>
+                <th>Course</th>
                 <th>Type</th>
-                
+
                 {/* Clickable sort headers */}
                 <th onClick={() => handleHeaderClick("cost")} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  Program Cost {renderSortIndicator("cost")}
-                </th>
-                <th onClick={() => handleHeaderClick("referralPercent")} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                  Referral % of Cost {renderSortIndicator("referralPercent")}
+                  Course Cost {renderSortIndicator("cost")}
                 </th>
                 <th>Referrer Incentive (₹)</th>
                 <th>Referee Discount (% of cost)</th>
                 <th onClick={() => handleHeaderClick("effectiveFrom")} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   Effective From {renderSortIndicator("effectiveFrom")}
                 </th>
+                <th>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    Effective To
+                    <span title="All referral activity — from the initial referral to the referee's enrollment — must be completed within this date.">
+                      <Info size={12} style={{ opacity: 0.6, cursor: 'help' }} />
+                    </span>
+                  </span>
+                </th>
+                <th>Fee Head</th>
+                <th>Last Modified By</th>
+                <th>Last Modified On</th>
                 <th style={{ width: '100px', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
@@ -228,11 +219,11 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
                     </td>
                     <td>
                       {isEditing ? (
-                        <input 
-                          type="number" 
-                          className="inline-edit-input" 
-                          value={editCost} 
-                          onChange={(e) => handleCostChange(e.target.value)} 
+                        <input
+                          type="number"
+                          className="inline-edit-input"
+                          value={editCost}
+                          onChange={(e) => setEditCost(e.target.value)}
                           style={{ width: '100px' }}
                         />
                       ) : (
@@ -241,25 +232,11 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
                     </td>
                     <td>
                       {isEditing ? (
-                        <input 
-                          type="number" 
-                          step="0.01"
-                          className="inline-edit-input" 
-                          value={editPercent} 
-                          onChange={(e) => handlePercentChange(e.target.value)} 
-                          style={{ width: '70px' }}
-                        />
-                      ) : (
-                        `${prog.referralPercent}%`
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <input 
-                          type="number" 
-                          className="inline-edit-input" 
-                          value={editReferrer} 
-                          onChange={(e) => setEditReferrer(e.target.value)} 
+                        <input
+                          type="number"
+                          className="inline-edit-input"
+                          value={editReferrer}
+                          onChange={(e) => setEditReferrer(e.target.value)}
                           style={{ width: '95px' }}
                         />
                       ) : (
@@ -270,11 +247,11 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
                       {isEditing ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <input 
-                              type="number" 
-                              className="inline-edit-input" 
-                              value={editReferee} 
-                              onChange={(e) => setEditReferee(e.target.value)} 
+                            <input
+                              type="number"
+                              className="inline-edit-input"
+                              value={editReferee}
+                              onChange={(e) => setEditReferee(e.target.value)}
                               style={{ width: '60px' }}
                             />
                             <span style={{ fontSize: '13px', fontWeight: '600' }}>%</span>
@@ -289,11 +266,11 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
                     </td>
                     <td>
                       {isEditing ? (
-                        <input 
-                          type="text" 
-                          className="inline-edit-input" 
-                          value={editEffective} 
-                          onChange={(e) => setEditEffective(e.target.value)} 
+                        <input
+                          type="text"
+                          className="inline-edit-input"
+                          value={editEffective}
+                          onChange={(e) => setEditEffective(e.target.value)}
                           style={{ width: '110px' }}
                         />
                       ) : (
@@ -301,18 +278,48 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
                       )}
                     </td>
                     <td>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          className="inline-edit-input"
+                          placeholder="e.g. 31 May 2027"
+                          value={editEffectiveTo}
+                          onChange={(e) => setEditEffectiveTo(e.target.value)}
+                          style={{ width: '110px' }}
+                        />
+                      ) : (
+                        prog.effectiveTo ?? "-"
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <select
+                          className="inline-edit-input"
+                          value={editFeeHead}
+                          onChange={(e) => setEditFeeHead(e.target.value)}
+                          style={{ width: '140px', cursor: 'pointer' }}
+                        >
+                          {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
+                        </select>
+                      ) : (
+                        prog.feeHead ?? "-"
+                      )}
+                    </td>
+                    <td style={{ color: 'var(--text-muted)' }}>{prog.lastModifiedBy ?? "-"}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{prog.lastModifiedOn ?? "-"}</td>
+                    <td>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                         {isEditing ? (
                           <>
-                            <button 
-                              className="action-icon-btn save" 
+                            <button
+                              className="action-icon-btn save"
                               onClick={() => saveEdit(prog.name)}
                               title="Save Policy Changes"
                             >
                               <Save size={14} />
                             </button>
-                            <button 
-                              className="action-icon-btn" 
+                            <button
+                              className="action-icon-btn"
                               onClick={cancelEdit}
                               title="Cancel Edit"
                               style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
@@ -321,8 +328,8 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
                             </button>
                           </>
                         ) : (
-                          <button 
-                            className="action-icon-btn" 
+                          <button
+                            className="action-icon-btn"
                             onClick={() => startEdit(programOriginalIdx, prog)}
                             title="Edit Referral Policy Row"
                           >
@@ -336,7 +343,7 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
               })}
               {sortedPrograms.length === 0 && (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                  <td colSpan="10" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
                     No policy configurations found matching "{searchTerm}"
                   </td>
                 </tr>

@@ -112,50 +112,9 @@
   box-shadow: 0 4px 14px rgba(226, 223, 241, 0.9);
 }
 
-/* ── TABS ────────────────────────────────────────── */
-.tabs-container {
-  margin-bottom: 20px;
-  background: white;
-  border-radius: 8px;
-  padding: 0;
-  box-shadow: 0 2px 8px rgba(226, 223, 241, 0.7);
-}
-
-.tabs {
-  display: flex;
-  align-items: center;
-  gap: 0;
-}
-
-.tab {
-  padding: 15px 20px;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: #666;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
-
-/* All 4 status tabs share the row equally — no more sequential arrow-chain. */
-.tab.tab-even {
-  flex: 1;
-}
-
-.tab:hover {
-  color: #333;
-  background-color: #f9f9f9;
-}
-
-.tab.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
+/* Stat tiles now double as the tab filter — highlight whichever one is active. */
+.stat-box-active {
+  border: 2px solid var(--primary);
 }
 
 /* ── TABLE ───────────────────────────────────────── */
@@ -232,10 +191,16 @@
   text-align: center;
 }
 
+.status-th {
+  text-align: center;
+}
+
 .stage-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  width: 170px;
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -311,9 +276,5 @@
   .header-controls {
     flex-direction: column;
     width: 100%;
-  }
-
-  .tabs {
-    flex-wrap: wrap;
   }
 }

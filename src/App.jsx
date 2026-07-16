@@ -21,9 +21,11 @@ import {
   RefreshCw,
   AlertTriangle,
   TrendingUp,
-  Plus
+  Plus,
+  Info,
+  Search
 } from "lucide-react";
-import { initialUniversityData } from "./mockData";
+import { initialUniversityData, COURSE_POOL, buildInitialPayoutRecords } from "./mockData";
 import Dashboard from "./components/Dashboard";
 import Reports from "./components/Reports";
 import DuplicateLeads from "./components/DuplicateLeads";
@@ -49,14 +51,22 @@ export default function App() {
   const [notifChannelFilter, setNotifChannelFilter] = useState("All Channels");
   const [notifStatusFilter, setNotifStatusFilter] = useState("All Statuses");
 
-  // Add New Program state
+  // Add Course state
   const [showAddProgram, setShowAddProgram] = useState(false);
   const [programName, setProgramName] = useState("");
   const [programType, setProgramType] = useState("UG");
+  const [courseSearchOpen, setCourseSearchOpen] = useState(false);
+  const [courseSearchTerm, setCourseSearchTerm] = useState("");
   const [referrerIncentive, setReferrerIncentive] = useState("");
   const [refereeDiscount, setRefereeDiscount] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState("");
+  const [effectiveTo, setEffectiveTo] = useState("");
+  const [feeHead, setFeeHead] = useState("Tuition Fees");
   const [addProgramError, setAddProgramError] = useState("");
+
+  // Referral Payouts — lifted here (instead of local to ReferralPayouts) so Payment
+  // History can read the same live records once a payout is marked Payment Done.
+  const [payoutRecords, setPayoutRecords] = useState(buildInitialPayoutRecords);
 
   // Fraud Monitor state
   const [resolvedReferrers, setResolvedReferrers] = useState({});
@@ -98,6 +108,12 @@ Approved rewards will be credited to the bank account registered in the student 
 
   const currentUniData = uniData[selectedUni];
 
+  // Candidate courses for the "Add" modal's course-selection search: pooled options of
+  // the selected UG/PG type, minus courses this university already has configured below.
+  const existingCourseNames = new Set(currentUniData.programs.map(p => p.name.toLowerCase()));
+  const candidateCourses = (COURSE_POOL[programType] || []).filter(c => !existingCourseNames.has(c.toLowerCase()));
+  const courseSearchResults = candidateCourses.filter(c => c.toLowerCase().includes(courseSearchTerm.toLowerCase()));
+
   // Handler to toggle universities
   const handleUniChange = (e) => {
     setSelectedUni(e.target.value);
@@ -133,16 +149,20 @@ Approved rewards will be credited to the bank account registered in the student 
 
   // Handler to update referral policy row
   const handleUpdatePolicy = (updatedProg) => {
+    const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     setUniData((prevData) => {
       const updatedPrograms = prevData[selectedUni].programs.map((prog) => {
         if (prog.name === updatedProg.name) {
           return {
             ...prog,
             cost: updatedProg.cost,
-            referralPercent: updatedProg.referralPercent,
             referrerIncentive: updatedProg.referrerIncentive,
             refereeDiscount: updatedProg.refereeDiscount,
-            effectiveFrom: updatedProg.effectiveFrom
+            effectiveFrom: updatedProg.effectiveFrom,
+            effectiveTo: updatedProg.effectiveTo,
+            feeHead: updatedProg.feeHead,
+            lastModifiedBy: "Admin User",
+            lastModifiedOn: today
           };
         }
         return prog;
@@ -158,12 +178,73 @@ Approved rewards will be credited to the bank account registered in the student 
     });
   };
 
+  // Handler to flag a referrer from the Dashboard's High Volume Referrers card — this
+  // updates the same `reports` record that the Reports tab's Referrer Report reads its
+  // Status column from, so the flag shows up there too.
+  const handleFlagReferrer = (referrerName) => {
+    setUniData((prevData) => {
+      const updatedReports = prevData[selectedUni].reports.map((rep) =>
+        rep.student === referrerName ? { ...rep, status: "Flagged" } : rep
+      );
+
+      return {
+        ...prevData,
+        [selectedUni]: {
+          ...prevData[selectedUni],
+          reports: updatedReports
+        }
+      };
+    });
+  };
+
+  // Handlers for the lifted Referral Payouts records — shared between ReferralPayouts
+  // (which can advance/edit them) and Payment History (read-only, filtered to Payment Done).
+  const handleMarkPaymentDone = (itemId, { transactionId, utrNumber, remarks }) => {
+    const today = new Date().toLocaleDateString('en-IN');
+    setPayoutRecords((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              status: 'Payment Done',
+              paymentInfo: {
+                transactionId,
+                utrNumber: utrNumber || '',
+                pocName: 'Rishabh Sahu',
+                pocPhone: '+91 98765 43210',
+                date: today
+              },
+              comment: remarks ? remarks.trim() : item.comment
+            }
+          : item
+      )
+    );
+  };
+
+  const handleMarkBankPending = (itemId) => {
+    setPayoutRecords((prev) => prev.map((item) => (item.id === itemId ? { ...item, status: 'Bank Details Pending' } : item)));
+  };
+
+  const handleNudge = (itemId, message) => {
+    setPayoutRecords((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, nudge: { message, lastSentAt: new Date() } } : item))
+    );
+  };
+
+  const handleSaveComment = (itemId, text) => {
+    setPayoutRecords((prev) => prev.map((item) => (item.id === itemId ? { ...item, comment: text } : item)));
+  };
+
   const resetAddProgramForm = () => {
     setProgramName("");
     setProgramType("UG");
+    setCourseSearchOpen(false);
+    setCourseSearchTerm("");
     setReferrerIncentive("");
     setRefereeDiscount("");
     setEffectiveFrom("");
+    setEffectiveTo("");
+    setFeeHead("Tuition Fees");
     setAddProgramError("");
   };
 
@@ -178,9 +259,9 @@ Approved rewards will be credited to the bank account registered in the student 
     return new Date(year, month - 1, day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  // Handler to add a new referral program from the "Add New Program" modal
+  // Handler to add a new referral course from the "Add" modal
   const handleSaveNewProgram = () => {
-    if (!programName.trim() || !programType || referrerIncentive === "" || refereeDiscount === "" || !effectiveFrom) {
+    if (!programName.trim() || !programType || referrerIncentive === "" || refereeDiscount === "" || !effectiveFrom || !effectiveTo || !feeHead) {
       setAddProgramError("All fields are required.");
       return;
     }
@@ -193,6 +274,10 @@ Approved rewards will be credited to the bank account registered in the student 
       referrerIncentive: parseInt(referrerIncentive, 10) || 0,
       refereeDiscount: parseFloat(refereeDiscount) || 0,
       effectiveFrom: formatEffectiveDate(effectiveFrom),
+      effectiveTo: formatEffectiveDate(effectiveTo),
+      feeHead,
+      lastModifiedBy: "-",
+      lastModifiedOn: "-",
       converted: 0,
       leads: 0,
       flagged: 0,
@@ -221,6 +306,7 @@ Approved rewards will be credited to the bank account registered in the student 
             data={currentUniData}
             setView={setView}
             onNavigateToRefereeReport={navigateToRefereeReportForCourse}
+            onFlagReferrer={handleFlagReferrer}
           />
         );
       case "reports":
@@ -249,10 +335,18 @@ Approved rewards will be credited to the bank account registered in the student 
         );
 
       case "referral_payouts":
-        return <ReferralPayouts university={currentUniData.name} />;
+        return (
+          <ReferralPayouts
+            records={payoutRecords}
+            onMarkPaymentDone={handleMarkPaymentDone}
+            onMarkBankPending={handleMarkBankPending}
+            onNudge={handleNudge}
+            onSaveComment={handleSaveComment}
+          />
+        );
 
       case "payment_history":
-        return <PaymentHistory data={currentUniData} />;
+        return <PaymentHistory data={currentUniData} payoutRecords={payoutRecords} />;
 
       case "policy_content": {
         // live version = last entry with live:true
@@ -296,7 +390,7 @@ Approved rewards will be credited to the bank account registered in the student 
               padding:'24px', boxShadow:'var(--shadow-sm)'
             }}>
               <h2 style={{ fontWeight:'700', fontSize:'20px', color:'var(--text-main)', marginBottom:'8px' }}>Referral Configuration</h2>
-              <p style={{ fontSize:'13px', color:'var(--text-muted)', lineHeight:'1.5' }}>Manage referral programmes — cost, incentive percentage, and effective dates.</p>
+              <p style={{ fontSize:'13px', color:'var(--text-muted)', lineHeight:'1.5' }}>Manage referral courses — cost, incentive percentage, and effective dates.</p>
             </div>
 
             {/* Referral Configuration Section */}
@@ -314,7 +408,7 @@ Approved rewards will be credited to the bank account registered in the student 
                     backgroundColor:'var(--text-main)', color:'#ffffff', border:'none', cursor:'pointer'
                   }}
                 >
-                  <Plus size={15} /> Add New Program
+                  <Plus size={15} /> Add
                 </button>
               </div>
               <ReferralPolicy data={currentUniData} onUpdatePolicy={handleUpdatePolicy} />
@@ -1502,30 +1596,10 @@ Approved rewards will be credited to the bank account registered in the student 
             boxShadow: '0 20px 60px rgba(226,223,241,0.8)'
           }}>
             <h3 style={{ fontWeight: '700', fontSize: '18px', color: 'var(--text-main)', marginBottom: '24px' }}>
-              Add New Program
+              Add
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Programme */}
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
-                  Programme
-                </label>
-                <input
-                  type="text"
-                  value={programName}
-                  onChange={e => setProgramName(e.target.value)}
-                  placeholder="Enter programme name"
-                  style={{
-                    width: '100%', padding: '10px 14px', border: '1.5px solid #ddd',
-                    borderRadius: '8px', fontSize: '14px', outline: 'none',
-                    transition: 'border-color 0.2s'
-                  }}
-                  onFocus={e => e.target.style.borderColor = 'var(--primary)'}
-                  onBlur={e => e.target.style.borderColor = '#ddd'}
-                />
-              </div>
-
               {/* Type */}
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
@@ -1533,7 +1607,12 @@ Approved rewards will be credited to the bank account registered in the student 
                 </label>
                 <select
                   value={programType}
-                  onChange={e => setProgramType(e.target.value)}
+                  onChange={e => {
+                    setProgramType(e.target.value);
+                    setProgramName("");
+                    setCourseSearchTerm("");
+                    setCourseSearchOpen(false);
+                  }}
                   style={{
                     width: '100%', padding: '10px 14px', border: '1.5px solid #ddd',
                     borderRadius: '8px', fontSize: '14px', outline: 'none',
@@ -1543,6 +1622,71 @@ Approved rewards will be credited to the bank account registered in the student 
                   <option value="UG">UG</option>
                   <option value="PG">PG</option>
                 </select>
+              </div>
+
+              {/* Course selection */}
+              <div style={{ position: 'relative' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
+                  Course
+                </label>
+                {!courseSearchOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setCourseSearchOpen(true)}
+                    style={{
+                      width: '100%', padding: '10px 14px', border: '1.5px solid #ddd',
+                      borderRadius: '8px', fontSize: '14px', textAlign: 'left',
+                      backgroundColor: '#ffffff', cursor: 'pointer',
+                      color: programName ? 'var(--text-main)' : '#999'
+                    }}
+                  >
+                    {programName || "Select a course"}
+                  </button>
+                ) : (
+                  <div>
+                    <div style={{ position: 'relative' }}>
+                      <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
+                      <input
+                        type="text"
+                        autoFocus
+                        value={courseSearchTerm}
+                        onChange={e => setCourseSearchTerm(e.target.value)}
+                        placeholder="Search course to add..."
+                        style={{
+                          width: '100%', padding: '10px 14px 10px 36px', border: '1.5px solid var(--primary)',
+                          borderRadius: '8px', fontSize: '14px', outline: 'none'
+                        }}
+                      />
+                    </div>
+                    <div style={{
+                      marginTop: '6px', maxHeight: '160px', overflowY: 'auto',
+                      border: '1px solid #eee', borderRadius: '8px'
+                    }}>
+                      {courseSearchResults.length > 0 ? (
+                        courseSearchResults.map(c => (
+                          <div
+                            key={c}
+                            onClick={() => {
+                              setProgramName(c);
+                              setCourseSearchOpen(false);
+                              setCourseSearchTerm("");
+                            }}
+                            style={{ padding: '9px 14px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f2f2f2' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            {c}
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '12px 14px', fontSize: '12px', color: '#888', lineHeight: '1.5' }}>
+                          No new {programType} course matches this search. To edit an existing course's
+                          details, make the changes directly in the table below instead.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Referrer Incentive */}
@@ -1607,6 +1751,46 @@ Approved rewards will be credited to the bank account registered in the student 
                 />
               </div>
 
+              {/* Effective To */}
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
+                  Effective To
+                  <span title="All referral activity — from the initial referral to the referee's enrollment — must be completed within this date.">
+                    <Info size={12} style={{ opacity: 0.6, cursor: 'help' }} />
+                  </span>
+                </label>
+                <input
+                  type="date"
+                  value={effectiveTo}
+                  onChange={e => setEffectiveTo(e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 14px', border: '1.5px solid #ddd',
+                    borderRadius: '8px', fontSize: '14px', outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                />
+              </div>
+
+              {/* Fee Head */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
+                  Fee Head
+                </label>
+                <select
+                  value={feeHead}
+                  onChange={e => setFeeHead(e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 14px', border: '1.5px solid #ddd',
+                    borderRadius: '8px', fontSize: '14px', outline: 'none',
+                    backgroundColor: '#ffffff', cursor: 'pointer'
+                  }}
+                >
+                  <option value="Tuition Fees">Tuition Fees</option>
+                  <option value="Examination Fees">Examination Fees</option>
+                  <option value="Registration Fee">Registration Fee</option>
+                </select>
+              </div>
+
               {addProgramError && (
                 <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--danger-text)' }}>
                   {addProgramError}
@@ -1640,7 +1824,7 @@ Approved rewards will be credited to the bank account registered in the student 
                 onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--primary-hover)'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--primary)'}
               >
-                Save Program
+                Save Course
               </button>
             </div>
           </div>

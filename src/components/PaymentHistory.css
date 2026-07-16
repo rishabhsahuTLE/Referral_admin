@@ -16,7 +16,7 @@
 
 .payment-summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 15px;
   margin: 30px 0;
 }
@@ -57,11 +57,42 @@
   box-shadow: 0 2px 8px rgba(226, 223, 241, 0.7);
 }
 
+.ledger-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
 .ledger-title {
   font-size: 16px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 20px;
+  margin: 0;
+}
+
+.ledger-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ledger-download-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+.grouped-table .group-header {
+  text-align: center;
+  border-bottom: 2px solid #e9ecef;
 }
 
 .ledger-container {
@@ -107,20 +138,7 @@
   font-weight: 500;
 }
 
-.course-info small {
-  display: block;
-  font-size: 12px;
-  color: #999;
-  margin-top: 3px;
-}
-
 .amount {
   font-weight: 600;
   color: var(--primary);
-}
-
-.reference {
-  font-family: monospace;
-  font-size: 12px;
-  color: #999;
 }

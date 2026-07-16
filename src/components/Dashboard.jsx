@@ -6,7 +6,7 @@ import {
   Copy
 } from "lucide-react";
 
-export default function Dashboard({ data, setView, onNavigateToRefereeReport }) {
+export default function Dashboard({ data, setView, onNavigateToRefereeReport, onFlagReferrer }) {
   const { stats, programs, referrers, reports } = data;
 
   // Calculate overall conversion rate
@@ -176,7 +176,7 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport }) 
         {/* Tile 1: Conversion by Program (Large - 8cols) */}
         <div className="dashboard-card col-8-lg" style={{ minHeight: '420px' }}>
           <div className="card-header">
-            <div className="card-title">Conversion by Programme</div>
+            <div className="card-title">Conversion by Course</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Overall Conversion Rate:</span>
               <span style={{ fontSize: '18px', fontWeight: '800', color: 'var(--primary)' }}>{overallConversionRate}%</span>
@@ -266,37 +266,35 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport }) 
           </div>
         </div>
 
-        {/* Tile 4: High Volume Referrers (4cols - Click to Fraud Monitor) */}
-        <div 
-          className="dashboard-card col-4-lg card-clickable" 
-          onClick={() => setView("fraud_monitor")}
-        >
+        {/* Tile 4: High Volume Referrers (4cols) */}
+        <div className="dashboard-card col-4-lg">
           <div className="card-header">
             <div className="card-title">High Volume Referrers</div>
-            <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '600' }}>Monitor</span>
           </div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div className="referrer-list" style={{ flexGrow: 1 }}>
-              {referrers.slice(0, 4).map((ref, idx) => (
-                <div key={idx} className="referrer-row">
-                  <div>
-                    <div className="referrer-name">{ref.name}</div>
-                    <div className="referrer-count">{ref.count} referrals ({ref.converted} converted)</div>
+              {referrers.slice(0, 4).map((ref, idx) => {
+                const referrerReport = reports.find(r => r.student === ref.name);
+                const isFlagged = referrerReport?.status === 'Flagged';
+                return (
+                  <div key={idx} className="referrer-row">
+                    <div>
+                      <div className="referrer-name">{ref.name}</div>
+                      <div className="referrer-count">{ref.count} referrals ({ref.converted} converted)</div>
+                    </div>
+                    {isFlagged ? (
+                      <span className="btn-flagged">Flagged</span>
+                    ) : (
+                      <button
+                        className="resolve-btn"
+                        onClick={() => onFlagReferrer(ref.name)}
+                      >
+                        Flag
+                      </button>
+                    )}
                   </div>
-                  <button 
-                    className="resolve-btn" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setView("fraud_monitor");
-                    }}
-                  >
-                    Resolve
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
-              Click anywhere in this tile to view Fraud Monitor
+                );
+              })}
             </div>
           </div>
         </div>
