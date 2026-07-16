@@ -109,15 +109,35 @@ Approved rewards will be credited to the bank account registered in the student 
 
   const currentUniData = uniData[selectedUni];
 
-  // Candidate courses for the "Add Course(s)" modal's course-selection search: pooled
+  // Candidate courses for the "Add Course(s)" modal's checkbox course picker: pooled
   // options of the selected UG/PG type, minus courses this university already has
-  // configured below and minus courses already picked in this modal session.
+  // configured below. Already-picked courses stay in the list (shown checked) so the
+  // admin can see and toggle them off from the same panel.
   const existingCourseNames = new Set(currentUniData.programs.map(p => p.name.toLowerCase()));
-  const selectedCourseNamesLower = new Set(selectedCourses.map(c => c.name.toLowerCase()));
-  const candidateCourses = (COURSE_POOL[programType] || []).filter(
-    c => !existingCourseNames.has(c.toLowerCase()) && !selectedCourseNamesLower.has(c.toLowerCase())
-  );
+  const candidateCourses = (COURSE_POOL[programType] || []).filter(c => !existingCourseNames.has(c.toLowerCase()));
   const courseSearchResults = candidateCourses.filter(c => c.toLowerCase().includes(courseSearchTerm.toLowerCase()));
+
+  const toggleCourse = (name) => {
+    setSelectedCourses(prev => {
+      const exists = prev.some(c => c.name === name);
+      if (exists) return prev.filter(c => c.name !== name);
+      return [...prev, { name, cost: COURSE_COST_MAP[name] ?? 0 }];
+    });
+  };
+
+  const allVisibleSelected = courseSearchResults.length > 0 && courseSearchResults.every(c => selectedCourses.some(sc => sc.name === c));
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelectedCourses(prev => prev.filter(c => !courseSearchResults.includes(c.name)));
+    } else {
+      setSelectedCourses(prev => {
+        const existingNames = new Set(prev.map(c => c.name));
+        const toAdd = courseSearchResults.filter(c => !existingNames.has(c)).map(c => ({ name: c, cost: COURSE_COST_MAP[c] ?? 0 }));
+        return [...prev, ...toAdd];
+      });
+    }
+  };
 
   // Handler to toggle universities
   const handleUniChange = (e) => {
@@ -1617,6 +1637,7 @@ Approved rewards will be credited to the bank account registered in the student 
           <div style={{
             backgroundColor: '#ffffff', borderRadius: '12px',
             padding: '32px', width: '480px', maxWidth: '90vw',
+            maxHeight: '90vh', overflowY: 'auto',
             boxShadow: '0 20px 60px rgba(226,223,241,0.8)'
           }}>
             <h3 style={{ fontWeight: '700', fontSize: '18px', color: 'var(--text-main)', marginBottom: '24px' }}>
@@ -1648,41 +1669,13 @@ Approved rewards will be credited to the bank account registered in the student 
                 </select>
               </div>
 
-              {/* Course selection — supports picking several courses to add at once,
-                  all sharing the incentive/discount/dates/fee head fields below. */}
+              {/* Course selection — checkbox multi-select (with a Select All shortcut) so
+                  several courses can be picked at once, all sharing the incentive/discount/
+                  dates/fee head fields below. */}
               <div style={{ position: 'relative' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
                   Course
                 </label>
-
-                {selectedCourses.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
-                    {selectedCourses.map(c => (
-                      <div
-                        key={c.name}
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '8px 12px', border: '1.5px solid #ddd', borderRadius: '8px', fontSize: '14px'
-                        }}
-                      >
-                        <span>
-                          {c.name}
-                          <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                            ₹{c.cost.toLocaleString('en-IN')} cost (autofilled)
-                          </span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCourses(prev => prev.filter(x => x.name !== c.name))}
-                          aria-label={`Remove ${c.name}`}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', display: 'flex' }}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
 
                 {!courseSearchOpen ? (
                   <button
@@ -1696,7 +1689,7 @@ Approved rewards will be credited to the bank account registered in the student 
                       fontWeight: selectedCourses.length > 0 ? '600' : '400'
                     }}
                   >
-                    {selectedCourses.length > 0 ? '+ Add another course' : 'Select a course'}
+                    {selectedCourses.length > 0 ? `${selectedCourses.length} course${selectedCourses.length !== 1 ? 's' : ''} selected — edit` : 'Select course(s)'}
                   </button>
                 ) : (
                   <div>
@@ -1707,7 +1700,7 @@ Approved rewards will be credited to the bank account registered in the student 
                         autoFocus
                         value={courseSearchTerm}
                         onChange={e => setCourseSearchTerm(e.target.value)}
-                        placeholder="Search course to add..."
+                        placeholder="Search courses..."
                         style={{
                           width: '100%', padding: '10px 14px 10px 36px', border: '1.5px solid var(--primary)',
                           borderRadius: '8px', fontSize: '14px', outline: 'none'
@@ -1715,31 +1708,58 @@ Approved rewards will be credited to the bank account registered in the student 
                       />
                     </div>
                     <div style={{
-                      marginTop: '6px', maxHeight: '160px', overflowY: 'auto',
+                      marginTop: '6px', maxHeight: '220px', overflowY: 'auto',
                       border: '1px solid #eee', borderRadius: '8px'
                     }}>
                       {courseSearchResults.length > 0 ? (
-                        courseSearchResults.map(c => (
+                        <>
                           <div
-                            key={c}
-                            onClick={() => {
-                              setSelectedCourses(prev => [...prev, { name: c, cost: COURSE_COST_MAP[c] ?? 0 }]);
-                              setCourseSearchOpen(false);
-                              setCourseSearchTerm("");
-                            }}
+                            onClick={toggleSelectAll}
                             style={{
-                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                              padding: '9px 14px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f2f2f2'
+                              display: 'flex', alignItems: 'center', gap: '8px',
+                              padding: '9px 14px', fontSize: '13px', fontWeight: '700', cursor: 'pointer',
+                              borderBottom: '1px solid #eee', backgroundColor: '#fafafa'
                             }}
-                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                           >
-                            <span>{c}</span>
-                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                              ₹{(COURSE_COST_MAP[c] ?? 0).toLocaleString('en-IN')}
-                            </span>
+                            <input
+                              type="checkbox"
+                              className="column-checkbox"
+                              checked={allVisibleSelected}
+                              onChange={toggleSelectAll}
+                              onClick={e => e.stopPropagation()}
+                            />
+                            <span>Select All</span>
                           </div>
-                        ))
+                          {courseSearchResults.map(c => {
+                            const isChecked = selectedCourses.some(sc => sc.name === c);
+                            return (
+                              <div
+                                key={c}
+                                onClick={() => toggleCourse(c)}
+                                style={{
+                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                  padding: '9px 14px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #f2f2f2'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                              >
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <input
+                                    type="checkbox"
+                                    className="column-checkbox"
+                                    checked={isChecked}
+                                    onChange={() => toggleCourse(c)}
+                                    onClick={e => e.stopPropagation()}
+                                  />
+                                  {c}
+                                </span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                  ₹{(COURSE_COST_MAP[c] ?? 0).toLocaleString('en-IN')}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </>
                       ) : (
                         <div style={{ padding: '12px 14px', fontSize: '12px', color: '#888', lineHeight: '1.5' }}>
                           No new {programType} course matches this search. To edit an existing course's
@@ -1747,18 +1767,50 @@ Approved rewards will be credited to the bank account registered in the student 
                         </div>
                       )}
                     </div>
-                    {courseSearchOpen && selectedCourses.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => { setCourseSearchOpen(false); setCourseSearchTerm(""); }}
-                        style={{
-                          marginTop: '6px', background: 'none', border: 'none', padding: 0,
-                          fontSize: '12px', fontWeight: '600', color: '#888', cursor: 'pointer'
-                        }}
-                      >
-                        Done adding courses
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => { setCourseSearchOpen(false); setCourseSearchTerm(""); }}
+                      style={{
+                        marginTop: '6px', background: 'none', border: 'none', padding: 0,
+                        fontSize: '12px', fontWeight: '600', color: '#888', cursor: 'pointer'
+                      }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                )}
+
+                {selectedCourses.length > 0 && (
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
+                      SELECTED COURSES ({selectedCourses.length})
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '160px', overflowY: 'auto', paddingRight: '2px' }}>
+                      {selectedCourses.map(c => (
+                        <div
+                          key={c.name}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '8px 12px', border: '1.5px solid #ddd', borderRadius: '8px', fontSize: '14px', flexShrink: 0
+                          }}
+                        >
+                          <span>
+                            {c.name}
+                            <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                              ₹{c.cost.toLocaleString('en-IN')} cost (autofilled)
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCourses(prev => prev.filter(x => x.name !== c.name))}
+                            aria-label={`Remove ${c.name}`}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', display: 'flex', flexShrink: 0 }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

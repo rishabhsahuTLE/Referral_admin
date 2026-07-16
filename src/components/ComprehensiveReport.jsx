@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ComprehensiveReportModal from './ComprehensiveReportModal';
+import './ComprehensiveReport.css';
 
 // Per-course counts are derived straight from each university's refereeReports —
 // the same ground-truth per-individual records the Reports tab uses — rather than
@@ -18,6 +19,13 @@ function computeCourseStats(uni) {
   });
 }
 
+function sumStats(stats) {
+  return stats.reduce(
+    (acc, s) => ({ leads: acc.leads + s.leads, converted: acc.converted + s.converted, dropOff: acc.dropOff + s.dropOff }),
+    { leads: 0, converted: 0, dropOff: 0 }
+  );
+}
+
 export default function ComprehensiveReport({ uniData, payoutRecords }) {
   const [popup, setPopup] = useState(null);
 
@@ -33,8 +41,7 @@ export default function ComprehensiveReport({ uniData, payoutRecords }) {
         <table className="custom-table">
           <thead>
             <tr>
-              <th>University Name</th>
-              <th>Course Name</th>
+              <th>Course</th>
               <th>Leads Generated</th>
               <th>Admissions Converted</th>
               <th>Drop off</th>
@@ -43,18 +50,37 @@ export default function ComprehensiveReport({ uniData, payoutRecords }) {
           <tbody>
             {universities.map((uni) => {
               const stats = computeCourseStats(uni);
+              const totals = sumStats(stats);
               return (
                 <React.Fragment key={uni.id}>
-                  {stats.map((row, idx) => (
+                  <tr className="cr-total-row">
+                    <td>{uni.name} · {stats.length} Course{stats.length !== 1 ? 's' : ''}</td>
+                    <td>
+                      <button className="report-link-btn" onClick={() => setPopup({ uni, courseName: null, column: 'leads' })}>
+                        {totals.leads}
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        className="report-link-btn"
+                        style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success-text)' }}
+                        onClick={() => setPopup({ uni, courseName: null, column: 'converted' })}
+                      >
+                        {totals.converted}
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        className="report-link-btn"
+                        style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)' }}
+                        onClick={() => setPopup({ uni, courseName: null, column: 'dropOff' })}
+                      >
+                        {totals.dropOff}
+                      </button>
+                    </td>
+                  </tr>
+                  {stats.map((row) => (
                     <tr key={row.course}>
-                      {idx === 0 && (
-                        <td
-                          rowSpan={stats.length}
-                          style={{ fontWeight: '700', verticalAlign: 'top', borderRight: '1px solid var(--border)' }}
-                        >
-                          {uni.name}
-                        </td>
-                      )}
                       <td style={{ fontWeight: '600' }}>{row.course}</td>
                       <td>
                         <button className="report-link-btn" onClick={() => setPopup({ uni, courseName: row.course, column: 'leads' })}>

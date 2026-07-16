@@ -2,18 +2,19 @@ import React from 'react';
 import { FiX } from 'react-icons/fi';
 import './ComprehensiveReportModal.css';
 
-// Leads Generated / Drop off: one row per referee referred into this course, sourced
-// from the university's refereeReports (the same records the table counts come from).
+// Leads Generated / Drop off: one row per referee referred into this course (or, when
+// courseName is null — the university total was clicked — every course), sourced from
+// the university's refereeReports (the same records the table counts come from).
 function buildFunnelRows(uni, courseName, column) {
   const refereeReports = uni.refereeReports || [];
   const reports = uni.reports || [];
   const programs = uni.programs || [];
-  const prog = programs.find((p) => p.name === courseName);
 
   return refereeReports
-    .filter((r) => r.refereeCourse === courseName && (column === 'dropOff' ? r.applicationStatus === 'Dropped' : true))
+    .filter((r) => (courseName ? r.refereeCourse === courseName : true) && (column === 'dropOff' ? r.applicationStatus === 'Dropped' : true))
     .map((r) => {
       const referrerReport = reports.find((rep) => rep.student === r.referrerName);
+      const prog = programs.find((p) => p.name === r.refereeCourse);
       return {
         referrerName: r.referrerName,
         referrerEnrollNo: referrerReport?.enrollmentNo ?? '-',
@@ -28,20 +29,21 @@ function buildFunnelRows(uni, courseName, column) {
     });
 }
 
-// Admissions Converted: every Enrolled referee for this course, in the same
-// Referrer/Referee Details layout as Payment History — but it doesn't require an
-// actual payout record to show up here (that's a separate, later step), so unpaid
-// ones just read "Payment Pending" under Date of Payment instead of being excluded.
+// Admissions Converted: every Enrolled referee for this course (or every course, when
+// courseName is null), in the same Referrer/Referee Details layout as Payment History —
+// but it doesn't require an actual payout record to show up here (that's a separate,
+// later step), so unpaid ones just read "Payment Pending" under Date of Payment instead
+// of being excluded.
 function buildConvertedRows(uni, courseName, payoutRecords) {
   const refereeReports = uni.refereeReports || [];
   const reports = uni.reports || [];
   const programs = uni.programs || [];
-  const prog = programs.find((p) => p.name === courseName);
 
   return refereeReports
-    .filter((r) => r.refereeCourse === courseName && r.applicationStatus === 'Enrolled')
+    .filter((r) => (courseName ? r.refereeCourse === courseName : true) && r.applicationStatus === 'Enrolled')
     .map((r) => {
       const referrerReport = reports.find((rep) => rep.student === r.referrerName);
+      const prog = programs.find((p) => p.name === r.refereeCourse);
       const matchingPayout = payoutRecords.find(
         (p) => p.status === 'Payment Done' && p.referrer === r.referrerName && p.student === r.refereeName && p.course === r.refereeCourse
       );
@@ -84,7 +86,7 @@ export default function ComprehensiveReportModal({ popup, payoutRecords, onClose
         <div className="cr-modal-header">
           <div>
             <div className="cr-modal-title">{COLUMN_LABELS[column]}</div>
-            <div className="cr-modal-subtitle">{uni.name} · {courseName}</div>
+            <div className="cr-modal-subtitle">{uni.name} · {courseName ?? 'All Courses'}</div>
           </div>
           <button className="cr-modal-close" onClick={onClose} aria-label="Close">
             <FiX size={20} />

@@ -1,0 +1,10 @@
+.custom-table .cr-total-row td {
+  background-color: #eef1f5;
+  font-weight: 700;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border);
+}
+
+.custom-table .cr-total-row:hover td {
+  background-color: #eef1f5;
+}
