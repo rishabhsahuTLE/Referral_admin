@@ -53,7 +53,7 @@ export default function App() {
 
   // Add Course state
   const [showAddProgram, setShowAddProgram] = useState(false);
-  const [programName, setProgramName] = useState("");
+  const [selectedCourses, setSelectedCourses] = useState([]);
   const [programType, setProgramType] = useState("UG");
   const [courseSearchOpen, setCourseSearchOpen] = useState(false);
   const [courseSearchTerm, setCourseSearchTerm] = useState("");
@@ -108,10 +108,14 @@ Approved rewards will be credited to the bank account registered in the student 
 
   const currentUniData = uniData[selectedUni];
 
-  // Candidate courses for the "Add" modal's course-selection search: pooled options of
-  // the selected UG/PG type, minus courses this university already has configured below.
+  // Candidate courses for the "Add Course(s)" modal's course-selection search: pooled
+  // options of the selected UG/PG type, minus courses this university already has
+  // configured below and minus courses already picked in this modal session.
   const existingCourseNames = new Set(currentUniData.programs.map(p => p.name.toLowerCase()));
-  const candidateCourses = (COURSE_POOL[programType] || []).filter(c => !existingCourseNames.has(c.toLowerCase()));
+  const selectedCourseNamesLower = new Set(selectedCourses.map(c => c.toLowerCase()));
+  const candidateCourses = (COURSE_POOL[programType] || []).filter(
+    c => !existingCourseNames.has(c.toLowerCase()) && !selectedCourseNamesLower.has(c.toLowerCase())
+  );
   const courseSearchResults = candidateCourses.filter(c => c.toLowerCase().includes(courseSearchTerm.toLowerCase()));
 
   // Handler to toggle universities
@@ -236,7 +240,7 @@ Approved rewards will be credited to the bank account registered in the student 
   };
 
   const resetAddProgramForm = () => {
-    setProgramName("");
+    setSelectedCourses([]);
     setProgramType("UG");
     setCourseSearchOpen(false);
     setCourseSearchTerm("");
@@ -259,15 +263,16 @@ Approved rewards will be credited to the bank account registered in the student 
     return new Date(year, month - 1, day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  // Handler to add a new referral course from the "Add" modal
+  // Handler to add one or more new referral courses — sharing the same type/incentive/
+  // discount/dates/fee head — from the "Add Course(s)" modal.
   const handleSaveNewProgram = () => {
-    if (!programName.trim() || !programType || referrerIncentive === "" || refereeDiscount === "" || !effectiveFrom || !effectiveTo || !feeHead) {
-      setAddProgramError("All fields are required.");
+    if (selectedCourses.length === 0 || !programType || referrerIncentive === "" || refereeDiscount === "" || !effectiveFrom || !effectiveTo || !feeHead) {
+      setAddProgramError("All fields are required, including at least one course.");
       return;
     }
 
-    const newProgram = {
-      name: programName.trim(),
+    const newPrograms = selectedCourses.map((courseName) => ({
+      name: courseName,
       type: programType,
       cost: 0,
       referralPercent: 0,
@@ -284,13 +289,13 @@ Approved rewards will be credited to the bank account registered in the student 
       inProcess: 0,
       referrerData: { converted: 0, flagged: 0, inProcess: 0 },
       refereeData: { converted: 0, flagged: 0, inProcess: 0 }
-    };
+    }));
 
     setUniData((prevData) => ({
       ...prevData,
       [selectedUni]: {
         ...prevData[selectedUni],
-        programs: [...prevData[selectedUni].programs, newProgram]
+        programs: [...prevData[selectedUni].programs, ...newPrograms]
       }
     }));
 
@@ -1596,7 +1601,7 @@ Approved rewards will be credited to the bank account registered in the student 
             boxShadow: '0 20px 60px rgba(226,223,241,0.8)'
           }}>
             <h3 style={{ fontWeight: '700', fontSize: '18px', color: 'var(--text-main)', marginBottom: '24px' }}>
-              Add
+              Add Course(s)
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1609,7 +1614,7 @@ Approved rewards will be credited to the bank account registered in the student 
                   value={programType}
                   onChange={e => {
                     setProgramType(e.target.value);
-                    setProgramName("");
+                    setSelectedCourses([]);
                     setCourseSearchTerm("");
                     setCourseSearchOpen(false);
                   }}
@@ -1624,11 +1629,37 @@ Approved rewards will be credited to the bank account registered in the student 
                 </select>
               </div>
 
-              {/* Course selection */}
+              {/* Course selection — supports picking several courses to add at once,
+                  all sharing the incentive/discount/dates/fee head fields below. */}
               <div style={{ position: 'relative' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
                   Course
                 </label>
+
+                {selectedCourses.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
+                    {selectedCourses.map(c => (
+                      <div
+                        key={c}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '8px 12px', border: '1.5px solid #ddd', borderRadius: '8px', fontSize: '14px'
+                        }}
+                      >
+                        <span>{c}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCourses(prev => prev.filter(x => x !== c))}
+                          aria-label={`Remove ${c}`}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', display: 'flex' }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {!courseSearchOpen ? (
                   <button
                     type="button"
@@ -1637,10 +1668,11 @@ Approved rewards will be credited to the bank account registered in the student 
                       width: '100%', padding: '10px 14px', border: '1.5px solid #ddd',
                       borderRadius: '8px', fontSize: '14px', textAlign: 'left',
                       backgroundColor: '#ffffff', cursor: 'pointer',
-                      color: programName ? 'var(--text-main)' : '#999'
+                      color: selectedCourses.length > 0 ? 'var(--primary)' : '#999',
+                      fontWeight: selectedCourses.length > 0 ? '600' : '400'
                     }}
                   >
-                    {programName || "Select a course"}
+                    {selectedCourses.length > 0 ? '+ Add another course' : 'Select a course'}
                   </button>
                 ) : (
                   <div>
@@ -1667,7 +1699,7 @@ Approved rewards will be credited to the bank account registered in the student 
                           <div
                             key={c}
                             onClick={() => {
-                              setProgramName(c);
+                              setSelectedCourses(prev => [...prev, c]);
                               setCourseSearchOpen(false);
                               setCourseSearchTerm("");
                             }}
@@ -1685,6 +1717,18 @@ Approved rewards will be credited to the bank account registered in the student 
                         </div>
                       )}
                     </div>
+                    {courseSearchOpen && selectedCourses.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { setCourseSearchOpen(false); setCourseSearchTerm(""); }}
+                        style={{
+                          marginTop: '6px', background: 'none', border: 'none', padding: 0,
+                          fontSize: '12px', fontWeight: '600', color: '#888', cursor: 'pointer'
+                        }}
+                      >
+                        Done adding courses
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
