@@ -38,6 +38,16 @@ function generateLeadDate(seed) {
   return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+// Enrollment happens some weeks after the initial referral — reuses the same lead-date
+// "days ago" math, just closer to today, so it never lands after the lead date.
+function generateEnrollDate(seed) {
+  const leadDaysAgo = 5 + ((seed * 13) % 90);
+  const daysAgo = Math.max(1, leadDaysAgo - (10 + (seed % 15)));
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 // Pool of course names an admin can pick from in the "Add Course" flow, before any
 // university-specific filtering (already-added courses are excluded per-university).
 export const COURSE_POOL = {
@@ -283,6 +293,7 @@ function generateRefereeReports(reportsList, courseNames, idPrefix) {
         // Sprinkle in an occasional fraud flag for variety/testing, independent of funnel stage.
         status: globalIndex % 9 === 0 ? "Flagged" : "Clear",
         leadDate: generateLeadDate(globalIndex),
+        enrollDate: applicationStatus === "Enrolled" ? generateEnrollDate(globalIndex) : null,
         dropReason: applicationStatus === "Dropped" ? DROP_REASONS[globalIndex % DROP_REASONS.length] : null,
       });
     });

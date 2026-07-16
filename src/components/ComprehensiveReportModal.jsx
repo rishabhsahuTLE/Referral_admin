@@ -1,6 +1,5 @@
 import React from 'react';
 import { FiX } from 'react-icons/fi';
-import { buildPaidPayoutRows } from '../utils/paymentHistoryRows';
 import './ComprehensiveReportModal.css';
 
 // Leads Generated / Drop off: one row per referee referred into this course, sourced
@@ -29,6 +28,38 @@ function buildFunnelRows(uni, courseName, column) {
     });
 }
 
+// Admissions Converted: every Enrolled referee for this course, in the same
+// Referrer/Referee Details layout as Payment History — but it doesn't require an
+// actual payout record to show up here (that's a separate, later step), so unpaid
+// ones just read "Payment Pending" under Date of Payment instead of being excluded.
+function buildConvertedRows(uni, courseName, payoutRecords) {
+  const refereeReports = uni.refereeReports || [];
+  const reports = uni.reports || [];
+  const programs = uni.programs || [];
+  const prog = programs.find((p) => p.name === courseName);
+
+  return refereeReports
+    .filter((r) => r.refereeCourse === courseName && r.applicationStatus === 'Enrolled')
+    .map((r) => {
+      const referrerReport = reports.find((rep) => rep.student === r.referrerName);
+      const matchingPayout = payoutRecords.find(
+        (p) => p.status === 'Payment Done' && p.referrer === r.referrerName && p.student === r.refereeName && p.course === r.refereeCourse
+      );
+      return {
+        referrerName: r.referrerName,
+        referrerCourse: r.referrerCourse,
+        referrerEnrollNo: referrerReport?.enrollmentNo ?? '-',
+        paymentAmount: prog ? `₹${prog.referrerIncentive.toLocaleString('en-IN')}` : '-',
+        datePaid: matchingPayout ? matchingPayout.paymentInfo.date : 'Payment Pending',
+        refereeName: r.refereeName,
+        refereeCourse: r.refereeCourse,
+        refereeEnrollNo: r.refereeEnrollNo,
+        discountPct: prog ? prog.refereeDiscount : 0,
+        enrolledDate: r.enrollDate ?? r.leadDate,
+      };
+    });
+}
+
 const COLUMN_LABELS = {
   leads: 'Leads Generated',
   converted: 'Admissions Converted',
@@ -40,10 +71,7 @@ export default function ComprehensiveReportModal({ popup, payoutRecords, onClose
   const { uni, courseName, column } = popup;
 
   const funnelRows = column !== 'converted' ? buildFunnelRows(uni, courseName, column) : [];
-  const paidRows =
-    column === 'converted'
-      ? buildPaidPayoutRows(payoutRecords, uni.programs).filter((r) => r.refereeCourse === courseName)
-      : [];
+  const convertedRows = column === 'converted' ? buildConvertedRows(uni, courseName, payoutRecords) : [];
 
   return (
     <div
@@ -86,8 +114,8 @@ export default function ComprehensiveReportModal({ popup, payoutRecords, onClose
                 </tr>
               </thead>
               <tbody>
-                {paidRows.map((r) => (
-                  <tr key={r.id}>
+                {convertedRows.map((r, i) => (
+                  <tr key={i}>
                     <td>{r.referrerName}</td>
                     <td>{r.referrerCourse}</td>
                     <td>{r.referrerEnrollNo}</td>
@@ -100,9 +128,9 @@ export default function ComprehensiveReportModal({ popup, payoutRecords, onClose
                     <td>{r.enrolledDate}</td>
                   </tr>
                 ))}
-                {paidRows.length === 0 && (
+                {convertedRows.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="cr-modal-empty">No paid admissions for this course yet.</td>
+                    <td colSpan={10} className="cr-modal-empty">No converted admissions for this course yet.</td>
                   </tr>
                 )}
               </tbody>
