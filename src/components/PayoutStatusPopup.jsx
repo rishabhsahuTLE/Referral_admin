@@ -10,7 +10,6 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [transactionId, setTransactionId] = useState('');
   const [utrNumber, setUtrNumber] = useState('');
-  const [remarks, setRemarks] = useState('');
   const [formError, setFormError] = useState('');
 
   const [nudgeMessage, setNudgeMessage] = useState(DEFAULT_NUDGE_MESSAGE);
@@ -26,7 +25,6 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
     setShowPaymentForm(false);
     setTransactionId('');
     setUtrNumber('');
-    setRemarks('');
     setFormError('');
     setNudgeMessage(item?.nudge?.message || DEFAULT_NUDGE_MESSAGE);
     setIsShaking(false);
@@ -64,7 +62,6 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
     onMarkPaymentDone(item.id, {
       transactionId: transactionId.trim(),
       utrNumber: utrNumber.trim(),
-      remarks: remarks.trim(),
     });
     onClose();
   };
@@ -204,15 +201,6 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
                   placeholder="e.g. UTR2026041700931"
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value)}
-                />
-              </div>
-              <div className="payout-status-field">
-                <label>Remarks (optional)</label>
-                <textarea
-                  className="payout-status-input payout-status-textarea"
-                  placeholder="Any additional notes about this payment..."
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
                 />
               </div>
               {formError && <div className="payout-status-error">{formError}</div>}

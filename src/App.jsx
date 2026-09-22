@@ -229,7 +229,7 @@ Approved rewards will be credited to the bank account registered in the student 
   // (which can advance/edit them) and Payment History (read-only, filtered to Payment Done).
   // Each scopes its update into payoutRecordsByUni[selectedUni], same spread pattern as
   // handleUpdateDuplicateStatus/handleUpdatePolicy/handleFlagReferrer below.
-  const handleMarkPaymentDone = (itemId, { transactionId, utrNumber, remarks }) => {
+  const handleMarkPaymentDone = (itemId, { transactionId, utrNumber }) => {
     const today = new Date().toLocaleDateString('en-IN');
     setPayoutRecordsByUni((prev) => ({
       ...prev,
@@ -244,8 +244,7 @@ Approved rewards will be credited to the bank account registered in the student 
                 pocName: 'Rishabh Sahu',
                 pocPhone: '+91 98765 43210',
                 date: today
-              },
-              comment: remarks ? remarks.trim() : item.comment
+              }
             }
           : item
       )
@@ -258,13 +257,6 @@ Approved rewards will be credited to the bank account registered in the student 
       [selectedUni]: prev[selectedUni].map((item) =>
         item.id === itemId ? { ...item, nudge: { message, lastSentAt: new Date() } } : item
       )
-    }));
-  };
-
-  const handleSaveComment = (itemId, text) => {
-    setPayoutRecordsByUni((prev) => ({
-      ...prev,
-      [selectedUni]: prev[selectedUni].map((item) => (item.id === itemId ? { ...item, comment: text } : item))
     }));
   };
 
@@ -381,7 +373,6 @@ Approved rewards will be credited to the bank account registered in the student 
             records={payoutRecords}
             onMarkPaymentDone={handleMarkPaymentDone}
             onNudge={handleNudge}
-            onSaveComment={handleSaveComment}
           />
         );
 

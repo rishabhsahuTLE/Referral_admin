@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
-import { FiDownload, FiEdit2, FiMessageSquare } from 'react-icons/fi';
+import { FiDownload, FiEdit2 } from 'react-icons/fi';
 import DateRangeFilter from './DateRangeFilter';
 import SortBy from './SortBy';
 import PayoutExportModal from './PayoutExportModal';
 import PayoutStatusPopup from './PayoutStatusPopup';
-import PayoutCommentModal from './PayoutCommentModal';
 import { getPayoutStatus } from '../utils/payoutStatus';
 import './ReferralPayouts.css';
 
-function ReferralPayouts({ records, onMarkPaymentDone, onNudge, onSaveComment }) {
+function ReferralPayouts({ records, onMarkPaymentDone, onNudge }) {
   const [activeTab, setActiveTab] = useState('all');
   const [sortBy, setSortBy] = useState('date-newest');
   const [dateRange, setDateRange] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [statusPopupItemId, setStatusPopupItemId] = useState(null);
-  const [commentPopupItemId, setCommentPopupItemId] = useState(null);
 
   const filterDataForTable = () => {
     let filtered = records;
@@ -116,7 +114,6 @@ function ReferralPayouts({ records, onMarkPaymentDone, onNudge, onSaveComment })
   const tableData = filterDataForTable();
   const stats = calculateStats();
   const statusPopupItem = records.find((i) => i.id === statusPopupItemId) ?? null;
-  const commentPopupItem = records.find((i) => i.id === commentPopupItemId) ?? null;
 
   return (
     <div className="referral-payouts">
@@ -182,7 +179,6 @@ function ReferralPayouts({ records, onMarkPaymentDone, onNudge, onSaveComment })
               <th>TRANSACTION DETAILS</th>
               <th>AMOUNT</th>
               <th className="status-th">STATUS</th>
-              <th>REMARKS</th>
             </tr>
           </thead>
           <tbody>
@@ -222,15 +218,6 @@ function ReferralPayouts({ records, onMarkPaymentDone, onNudge, onSaveComment })
                     <FiEdit2 size={12} />
                   </span>
                 </td>
-                <td className="comment-cell">
-                  <button
-                    className={`comment-btn ${item.comment ? 'has-comment' : ''}`}
-                    onClick={() => setCommentPopupItemId(item.id)}
-                    title={item.comment ? 'View / edit remark' : 'Add a remark'}
-                  >
-                    <FiMessageSquare size={16} />
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -248,13 +235,6 @@ function ReferralPayouts({ records, onMarkPaymentDone, onNudge, onSaveComment })
         onClose={() => setStatusPopupItemId(null)}
         onMarkPaymentDone={onMarkPaymentDone}
         onNudge={onNudge}
-      />
-
-      {/* COMMENT MODAL */}
-      <PayoutCommentModal
-        item={commentPopupItem}
-        onClose={() => setCommentPopupItemId(null)}
-        onSave={onSaveComment}
       />
     </div>
   );

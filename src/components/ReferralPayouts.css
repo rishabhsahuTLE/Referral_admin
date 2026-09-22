@@ -220,36 +220,6 @@
   transform: scale(1.05);
 }
 
-.comment-cell {
-  text-align: center;
-}
-
-.comment-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  color: #999;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.comment-btn:hover {
-  background-color: #f0f0f0;
-  color: #666;
-}
-
-.comment-btn.has-comment {
-  color: var(--primary);
-}
-
-.comment-btn.has-comment:hover {
-  background-color: var(--primary-light);
-}
-
 .records-count {
   text-align: right;
   font-size: 12px;
