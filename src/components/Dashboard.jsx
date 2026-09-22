@@ -171,8 +171,8 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
       {/* Main 6-Tile Grid */}
       <div className="dashboard-grid">
         
-        {/* Tile 1: Conversion by Program (Large - 8cols) */}
-        <div className="dashboard-card col-8-lg" style={{ minHeight: '420px' }}>
+        {/* Tile 1: Conversion by Program (Large - full width) */}
+        <div className="dashboard-card col-12-lg" style={{ minHeight: '420px' }}>
           <div className="card-header">
             <div className="card-title">Conversion by Course</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
