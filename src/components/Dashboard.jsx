@@ -1,9 +1,7 @@
 import React from "react";
 import {
   TrendingUp,
-  ArrowRight,
-  AlertOctagon,
-  Copy
+  ArrowRight
 } from "lucide-react";
 
 export default function Dashboard({ data, setView, onNavigateToRefereeReport, onFlagReferrer }) {
@@ -213,45 +211,6 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 Scroll for more programs
               </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tile 2: Notifications (4cols) */}
-        <div className="dashboard-card col-4-lg">
-          <div className="card-header">
-            <div className="card-title">Notifications</div>
-            <span className="sidebar-badge" style={{ padding: '2px 8px' }}>Active</span>
-          </div>
-          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div className="notif-item" onClick={() => setView("fraud_monitor")}>
-              <div className="notif-icon-box">
-                <AlertOctagon size={20} />
-              </div>
-              <div className="notif-details">
-                <div className="notif-text">{data.notifications?.fraudFlags || 2} Fraud Flags</div>
-                <div className="notif-subtext">Requires immediate resolution</div>
-              </div>
-            </div>
-            
-            <div className="notif-item" onClick={() => setView("duplicate_leads")}>
-              <div className="notif-icon-box">
-                <Copy size={20} style={{ transform: 'rotate(180deg)' }} />
-              </div>
-              <div className="notif-details">
-                <div className="notif-text">{data.notifications?.duplicateLeads || 3} Duplicate Leads</div>
-                <div className="notif-subtext">Review matching student records</div>
-              </div>
-            </div>
-            
-            <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
-              <button 
-                className="portal-btn" 
-                onClick={() => setView("notification_log")}
-                style={{ width: '100%', justifyContent: 'center', padding: '10px' }}
-              >
-                View Notification Log <ArrowRight size={14} />
-              </button>
             </div>
           </div>
         </div>

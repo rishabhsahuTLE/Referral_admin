@@ -158,18 +158,11 @@ Approved rewards will be credited to the bank account registered in the student 
         return lead;
       });
 
-      // Recalculate duplicate notifications count
-      const pendingCount = updatedList.filter(l => l.status === "Pending").length;
-      
       return {
         ...prevData,
         [selectedUni]: {
           ...prevData[selectedUni],
-          duplicateLeads: updatedList,
-          notifications: {
-            ...prevData[selectedUni].notifications,
-            duplicateLeads: pendingCount
-          }
+          duplicateLeads: updatedList
         }
       };
     });
@@ -1400,11 +1393,6 @@ Approved rewards will be credited to the bank account registered in the student 
       default: return "Portal";
     }
   };
-
-  // Get active notification count badges for sidebar
-  const fraudBadge = currentUniData.notifications?.fraudFlags || 0;
-  const duplicateBadge = currentUniData.duplicateLeads.filter(l => l.status === "Pending").length;
-  const notifBadge = fraudBadge + duplicateBadge;
 
   return (
     <div className="app-container">

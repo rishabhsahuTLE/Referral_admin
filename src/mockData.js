@@ -608,11 +608,7 @@ export const initialUniversityData = {
       }
     ],
     reports: jhReports,
-    refereeReports: generateRefereeReports(jhReports, jhCourseNames, "JH2024"),
-    notifications: {
-      fraudFlags: 2,
-      duplicateLeads: 3
-    }
+    refereeReports: generateRefereeReports(jhReports, jhCourseNames, "JH2024")
   },
   iit_bhilai: {
     id: "iit_bhilai",
@@ -677,11 +673,7 @@ export const initialUniversityData = {
       }
     ],
     reports: ibReports,
-    refereeReports: generateRefereeReports(ibReports, ibCourseNames, "IB2024"),
-    notifications: {
-      fraudFlags: 3,
-      duplicateLeads: 2
-    }
+    refereeReports: generateRefereeReports(ibReports, ibCourseNames, "IB2024")
   },
   iit_mandi: {
     id: "iit_mandi",
@@ -745,10 +737,6 @@ export const initialUniversityData = {
       }
     ],
     reports: imReports,
-    refereeReports: generateRefereeReports(imReports, imCourseNames, "IM2024"),
-    notifications: {
-      fraudFlags: 1,
-      duplicateLeads: 1
-    }
+    refereeReports: generateRefereeReports(imReports, imCourseNames, "IM2024")
   }
 };

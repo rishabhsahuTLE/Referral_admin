@@ -558,53 +558,6 @@ button, input, select, textarea {
   text-align: right;
 }
 
-/* Notifications Card (Card 2) */
-.notif-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background-color: var(--danger-bg);
-  border: 1px solid rgba(239, 68, 68, 0.1);
-  border-radius: 8px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.notif-item:hover {
-  background-color: #fee2e2;
-  transform: translateX(4px);
-}
-
-.notif-icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #fee2e2;
-  color: var(--danger);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.notif-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.notif-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--danger-text);
-}
-
-.notif-subtext {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
 /* Info List (Card 3) */
 .info-row {
   display: flex;
