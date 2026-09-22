@@ -199,9 +199,10 @@ Approved rewards will be credited to the bank account registered in the student 
     });
   };
 
-  // Handler to flag a referrer from the Dashboard's High Volume Referrers card — this
-  // updates the same `reports` record that the Reports tab's Referrer Report reads its
-  // Status column from, so the flag shows up there too.
+  // Handlers for the Dashboard's High Volume Referrers card — Flag/Resolve both update the
+  // same `reports` record that the Reports tab's Referrer Report reads its Status column
+  // from, so the change shows up there too. Remove drops the referrer from the card's own
+  // `referrers` list, which nothing else in the app reads.
   const handleFlagReferrer = (referrerName) => {
     setUniData((prevData) => {
       const updatedReports = prevData[selectedUni].reports.map((rep) =>
@@ -213,6 +214,36 @@ Approved rewards will be credited to the bank account registered in the student 
         [selectedUni]: {
           ...prevData[selectedUni],
           reports: updatedReports
+        }
+      };
+    });
+  };
+
+  const handleResolveReferrer = (referrerName) => {
+    setUniData((prevData) => {
+      const updatedReports = prevData[selectedUni].reports.map((rep) =>
+        rep.student === referrerName ? { ...rep, status: "Clear" } : rep
+      );
+
+      return {
+        ...prevData,
+        [selectedUni]: {
+          ...prevData[selectedUni],
+          reports: updatedReports
+        }
+      };
+    });
+  };
+
+  const handleRemoveReferrer = (referrerName) => {
+    setUniData((prevData) => {
+      const updatedReferrers = prevData[selectedUni].referrers.filter((r) => r.name !== referrerName);
+
+      return {
+        ...prevData,
+        [selectedUni]: {
+          ...prevData[selectedUni],
+          referrers: updatedReferrers
         }
       };
     });
@@ -333,6 +364,8 @@ Approved rewards will be credited to the bank account registered in the student 
             setView={setView}
             onNavigateToRefereeReport={navigateToRefereeReportForCourse}
             onFlagReferrer={handleFlagReferrer}
+            onResolveReferrer={handleResolveReferrer}
+            onRemoveReferrer={handleRemoveReferrer}
           />
         );
       case "reports":

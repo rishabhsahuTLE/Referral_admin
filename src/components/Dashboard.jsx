@@ -4,7 +4,7 @@ import {
   ArrowRight
 } from "lucide-react";
 
-export default function Dashboard({ data, setView, onNavigateToRefereeReport, onFlagReferrer }) {
+export default function Dashboard({ data, setView, onNavigateToRefereeReport, onFlagReferrer, onResolveReferrer, onRemoveReferrer }) {
   const { stats, programs, referrers, reports } = data;
 
   // Calculate overall conversion rate
@@ -232,24 +232,37 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
           </div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div className="referrer-list" style={{ flexGrow: 1 }}>
-              {referrers.slice(0, 4).map((ref, idx) => {
+              {referrers.slice(0, 4).map((ref) => {
                 const referrerReport = reports.find(r => r.student === ref.name);
                 const isFlagged = referrerReport?.status === 'Flagged';
                 return (
-                  <div key={idx} className="referrer-row">
+                  <div key={ref.name} className="referrer-row">
                     <div>
                       <div className="referrer-name">{ref.name}</div>
                       <div className="referrer-count">{ref.count} referrals ({ref.converted} converted)</div>
                     </div>
                     {isFlagged ? (
-                      <span className="btn-flagged">Flagged</span>
-                    ) : (
                       <button
                         className="resolve-btn"
-                        onClick={() => onFlagReferrer(ref.name)}
+                        onClick={() => onResolveReferrer(ref.name)}
                       >
-                        Flag
+                        Resolve
                       </button>
+                    ) : (
+                      <div className="referrer-actions">
+                        <button
+                          className="resolve-btn"
+                          onClick={() => onFlagReferrer(ref.name)}
+                        >
+                          Flag
+                        </button>
+                        <button
+                          className="remove-btn"
+                          onClick={() => onRemoveReferrer(ref.name)}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
