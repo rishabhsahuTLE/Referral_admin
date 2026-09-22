@@ -67,7 +67,9 @@ export default function App() {
 
   // Referral Payouts — lifted here (instead of local to ReferralPayouts) so Payment
   // History can read the same live records once a payout is marked Payment Done.
-  const [payoutRecords, setPayoutRecords] = useState(buildInitialPayoutRecords);
+  // Keyed by university id, same idiom as `uniData`, so switching universities shows
+  // a different set of payout records.
+  const [payoutRecordsByUni, setPayoutRecordsByUni] = useState(buildInitialPayoutRecords);
 
   // Fraud Monitor state
   const [resolvedReferrers, setResolvedReferrers] = useState({});
@@ -108,6 +110,7 @@ Approved rewards will be credited to the bank account registered in the student 
   ]);
 
   const currentUniData = uniData[selectedUni];
+  const payoutRecords = payoutRecordsByUni[selectedUni];
 
   // Candidate courses for the "Add Course(s)" modal's checkbox course picker: pooled
   // options of the selected UG/PG type, minus courses this university already has
@@ -224,10 +227,13 @@ Approved rewards will be credited to the bank account registered in the student 
 
   // Handlers for the lifted Referral Payouts records — shared between ReferralPayouts
   // (which can advance/edit them) and Payment History (read-only, filtered to Payment Done).
+  // Each scopes its update into payoutRecordsByUni[selectedUni], same spread pattern as
+  // handleUpdateDuplicateStatus/handleUpdatePolicy/handleFlagReferrer below.
   const handleMarkPaymentDone = (itemId, { transactionId, utrNumber, remarks }) => {
     const today = new Date().toLocaleDateString('en-IN');
-    setPayoutRecords((prev) =>
-      prev.map((item) =>
+    setPayoutRecordsByUni((prev) => ({
+      ...prev,
+      [selectedUni]: prev[selectedUni].map((item) =>
         item.id === itemId
           ? {
               ...item,
@@ -243,21 +249,23 @@ Approved rewards will be credited to the bank account registered in the student 
             }
           : item
       )
-    );
-  };
-
-  const handleMarkBankPending = (itemId) => {
-    setPayoutRecords((prev) => prev.map((item) => (item.id === itemId ? { ...item, status: 'Bank Details Pending' } : item)));
+    }));
   };
 
   const handleNudge = (itemId, message) => {
-    setPayoutRecords((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, nudge: { message, lastSentAt: new Date() } } : item))
-    );
+    setPayoutRecordsByUni((prev) => ({
+      ...prev,
+      [selectedUni]: prev[selectedUni].map((item) =>
+        item.id === itemId ? { ...item, nudge: { message, lastSentAt: new Date() } } : item
+      )
+    }));
   };
 
   const handleSaveComment = (itemId, text) => {
-    setPayoutRecords((prev) => prev.map((item) => (item.id === itemId ? { ...item, comment: text } : item)));
+    setPayoutRecordsByUni((prev) => ({
+      ...prev,
+      [selectedUni]: prev[selectedUni].map((item) => (item.id === itemId ? { ...item, comment: text } : item))
+    }));
   };
 
   const resetAddProgramForm = () => {
@@ -329,7 +337,9 @@ Approved rewards will be credited to the bank account registered in the student 
   const renderContent = () => {
     switch (view) {
       case "comprehensive_report":
-        return <ComprehensiveReport uniData={uniData} payoutRecords={payoutRecords} />;
+        // Cross-university view — needs every university's payout records, not just the
+        // currently-selected one, since it iterates Object.values(uniData) internally.
+        return <ComprehensiveReport uniData={uniData} payoutRecords={Object.values(payoutRecordsByUni).flat()} />;
 
       case "dashboard":
         return (
@@ -370,7 +380,6 @@ Approved rewards will be credited to the bank account registered in the student 
           <ReferralPayouts
             records={payoutRecords}
             onMarkPaymentDone={handleMarkPaymentDone}
-            onMarkBankPending={handleMarkBankPending}
             onNudge={handleNudge}
             onSaveComment={handleSaveComment}
           />

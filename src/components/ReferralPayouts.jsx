@@ -5,9 +5,10 @@ import SortBy from './SortBy';
 import PayoutExportModal from './PayoutExportModal';
 import PayoutStatusPopup from './PayoutStatusPopup';
 import PayoutCommentModal from './PayoutCommentModal';
+import { getPayoutStatus } from '../utils/payoutStatus';
 import './ReferralPayouts.css';
 
-function ReferralPayouts({ records, onMarkPaymentDone, onMarkBankPending, onNudge, onSaveComment }) {
+function ReferralPayouts({ records, onMarkPaymentDone, onNudge, onSaveComment }) {
   const [activeTab, setActiveTab] = useState('all');
   const [sortBy, setSortBy] = useState('date-newest');
   const [dateRange, setDateRange] = useState(null);
@@ -20,13 +21,13 @@ function ReferralPayouts({ records, onMarkPaymentDone, onMarkBankPending, onNudg
 
     switch (activeTab) {
       case 'paymentDone':
-        filtered = filtered.filter((item) => item.status === 'Payment Done');
+        filtered = filtered.filter((item) => getPayoutStatus(item) === 'Payment Done');
         break;
       case 'pendingPayout':
-        filtered = filtered.filter((item) => item.status === 'Pending Payout');
+        filtered = filtered.filter((item) => getPayoutStatus(item) === 'Pending Payout');
         break;
       case 'bankDetailsPending':
-        filtered = filtered.filter((item) => item.status === 'Bank Details Pending');
+        filtered = filtered.filter((item) => getPayoutStatus(item) === 'Bank Details Pending');
         break;
       case 'all':
       default:
@@ -73,7 +74,7 @@ function ReferralPayouts({ records, onMarkPaymentDone, onMarkBankPending, onNudg
       case 'name-desc':
         return dataCopy.sort((a, b) => b.student.localeCompare(a.student));
       case 'status':
-        return dataCopy.sort((a, b) => a.status.localeCompare(b.status));
+        return dataCopy.sort((a, b) => getPayoutStatus(a).localeCompare(getPayoutStatus(b)));
       default:
         return dataCopy;
     }
@@ -86,9 +87,9 @@ function ReferralPayouts({ records, onMarkPaymentDone, onMarkBankPending, onNudg
     const amountDue = statsData
       .filter((item) => item.status !== 'Payment Done')
       .reduce((sum, item) => sum + item.amountValue, 0);
-    const paymentDoneCount = statsData.filter((item) => item.status === 'Payment Done').length;
-    const pendingPayoutCount = statsData.filter((item) => item.status === 'Pending Payout').length;
-    const bankDetailsPendingCount = statsData.filter((item) => item.status === 'Bank Details Pending').length;
+    const paymentDoneCount = statsData.filter((item) => getPayoutStatus(item) === 'Payment Done').length;
+    const pendingPayoutCount = statsData.filter((item) => getPayoutStatus(item) === 'Pending Payout').length;
+    const bankDetailsPendingCount = statsData.filter((item) => getPayoutStatus(item) === 'Bank Details Pending').length;
 
     return {
       totalStudents,
@@ -178,7 +179,7 @@ function ReferralPayouts({ records, onMarkPaymentDone, onMarkBankPending, onNudg
               <th>REFEREE</th>
               <th>COURSE</th>
               <th>ENROLLED ON</th>
-              <th>BANK DETAILS</th>
+              <th>TRANSACTION DETAILS</th>
               <th>AMOUNT</th>
               <th className="status-th">STATUS</th>
               <th>REMARKS</th>
@@ -186,7 +187,7 @@ function ReferralPayouts({ records, onMarkPaymentDone, onMarkBankPending, onNudg
           </thead>
           <tbody>
             {tableData.map((item) => (
-              <tr key={item.id} className={`table-row ${item.status === 'Bank Details Pending' ? 'bank-pending-row' : ''}`}>
+              <tr key={item.id} className={`table-row ${getPayoutStatus(item) === 'Bank Details Pending' ? 'bank-pending-row' : ''}`}>
                 <td className="student-name">{item.referrer}</td>
                 <td className="referrer-name">{item.student}</td>
                 <td className="course-name">{item.course}</td>
@@ -213,11 +214,11 @@ function ReferralPayouts({ records, onMarkPaymentDone, onMarkBankPending, onNudg
                 <td className="stage-cell">
                   <span
                     className="stage-badge stage-badge-clickable"
-                    style={{ backgroundColor: getStatusColor(item.status), color: 'white' }}
+                    style={{ backgroundColor: getStatusColor(getPayoutStatus(item)), color: 'white' }}
                     onClick={() => setStatusPopupItemId(item.id)}
                     title="Update payout status"
                   >
-                    {item.status}
+                    {getPayoutStatus(item)}
                     <FiEdit2 size={12} />
                   </span>
                 </td>
@@ -246,7 +247,6 @@ function ReferralPayouts({ records, onMarkPaymentDone, onMarkBankPending, onNudg
         item={statusPopupItem}
         onClose={() => setStatusPopupItemId(null)}
         onMarkPaymentDone={onMarkPaymentDone}
-        onMarkBankPending={onMarkBankPending}
         onNudge={onNudge}
       />
 

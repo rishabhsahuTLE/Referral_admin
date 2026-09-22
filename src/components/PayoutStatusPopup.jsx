@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FiCheckCircle, FiAlertTriangle, FiSend, FiX } from 'react-icons/fi';
 import { DEFAULT_NUDGE_MESSAGE } from '../mockData';
+import { getPayoutStatus } from '../utils/payoutStatus';
 import './PayoutStatusPopup.css';
 
 const NUDGE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 1 day
 
-export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, onMarkBankPending, onNudge }) {
+export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, onNudge }) {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [transactionId, setTransactionId] = useState('');
   const [utrNumber, setUtrNumber] = useState('');
@@ -68,13 +69,6 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
     onClose();
   };
 
-  // Sets status only — the popup stays open. `item` is re-derived fresh from the parent's
-  // data on every render, so as soon as the parent updates it this component's own render
-  // logic (branching on item.status) swaps straight to the nudge panel below.
-  const handleMarkBankPending = () => {
-    onMarkBankPending(item.id);
-  };
-
   const lastSentAt = item.nudge?.lastSentAt ? new Date(item.nudge.lastSentAt).getTime() : null;
   const inCooldown = lastSentAt !== null && Date.now() - lastSentAt < NUDGE_COOLDOWN_MS;
 
@@ -105,7 +99,7 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
         </div>
 
         <div className="payout-status-body">
-          {item.status === 'Payment Done' && item.paymentInfo && (
+          {getPayoutStatus(item) === 'Payment Done' && item.paymentInfo && (
             <div className="payout-status-done-summary">
               <div className="payout-status-done-summary-title">
                 <FiCheckCircle size={16} /> Payment Done
@@ -133,42 +127,49 @@ export default function PayoutStatusPopup({ item, onClose, onMarkPaymentDone, on
             </div>
           )}
 
-          {item.status === 'Pending Payout' && !showPaymentForm && (
-            <div className="payout-status-choice-row">
+          {getPayoutStatus(item) === 'Pending Payout' && !showPaymentForm && (
+            <div className="payout-status-bank-details-card">
+              <div className="payout-status-bank-details-title">Bank Details on File</div>
+              <div className="payout-status-done-summary-row">
+                <span>Account Holder Name</span>
+                <strong>{item.bankDetails.accountHolderName}</strong>
+              </div>
+              <div className="payout-status-done-summary-row">
+                <span>Account Number</span>
+                <strong>{item.bankDetails.accountNumber}</strong>
+              </div>
+              <div className="payout-status-done-summary-row">
+                <span>IFSC Code</span>
+                <strong>{item.bankDetails.ifsc}</strong>
+              </div>
+              <div className="payout-status-done-summary-row">
+                <span>Bank Name</span>
+                <strong>{item.bankDetails.bankName}</strong>
+              </div>
               <button className="payout-status-choice-btn payment-done" onClick={() => setShowPaymentForm(true)}>
                 <FiCheckCircle size={16} /> Mark Payment Done
-              </button>
-              <button className="payout-status-choice-btn bank-pending" onClick={handleMarkBankPending}>
-                <FiAlertTriangle size={16} /> Mark Bank Details Pending
               </button>
             </div>
           )}
 
-          {item.status === 'Bank Details Pending' && (
-            <>
-              <div className="payout-status-nudge-panel">
-                <div className="payout-status-nudge-title">
-                  <FiAlertTriangle size={14} /> Bank Details Pending
-                </div>
-                <textarea
-                  className="payout-status-nudge-textarea"
-                  value={nudgeMessage}
-                  onChange={(e) => setNudgeMessage(e.target.value)}
-                  placeholder={DEFAULT_NUDGE_MESSAGE}
-                />
-                <button
-                  className={`payout-status-nudge-btn ${inCooldown ? 'cooling-down' : ''} ${isShaking ? 'shaking' : ''}`}
-                  onClick={handleNudge}
-                >
-                  <FiSend size={14} /> {inCooldown ? 'Nudged — on cooldown' : 'Nudge Student Portal'}
-                </button>
+          {getPayoutStatus(item) === 'Bank Details Pending' && (
+            <div className="payout-status-nudge-panel">
+              <div className="payout-status-nudge-title">
+                <FiAlertTriangle size={14} /> Bank Details Pending
               </div>
-              {!showPaymentForm && (
-                <button className="payout-status-mark-done-link" onClick={() => setShowPaymentForm(true)}>
-                  Bank details resolved — Mark Payment Done →
-                </button>
-              )}
-            </>
+              <textarea
+                className="payout-status-nudge-textarea"
+                value={nudgeMessage}
+                onChange={(e) => setNudgeMessage(e.target.value)}
+                placeholder={DEFAULT_NUDGE_MESSAGE}
+              />
+              <button
+                className={`payout-status-nudge-btn ${inCooldown ? 'cooling-down' : ''} ${isShaking ? 'shaking' : ''}`}
+                onClick={handleNudge}
+              >
+                <FiSend size={14} /> {inCooldown ? 'Nudged — on cooldown' : 'Nudge Student Portal'}
+              </button>
+            </div>
           )}
 
           {showPaymentForm && (

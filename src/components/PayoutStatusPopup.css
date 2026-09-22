@@ -68,13 +68,6 @@
   gap: 16px;
 }
 
-/* Two-way choice (Payment Done / Bank Details Pending) */
-.payout-status-choice-row {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .payout-status-choice-btn {
   display: flex;
   align-items: center;
@@ -95,12 +88,6 @@
   border-color: #0d9488;
   background: #f0fdfa;
   color: #0d9488;
-}
-
-.payout-status-choice-btn.bank-pending:hover {
-  border-color: #dc2626;
-  background: #fff5f5;
-  color: #dc2626;
 }
 
 /* Read-only "Payment Done" summary */
@@ -128,6 +115,23 @@
   justify-content: space-between;
   font-size: 12px;
   color: #555;
+}
+
+/* Read-only "Bank Details on File" card (Pending Payout, bank details present) */
+.payout-status-bank-details-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #fafbfc;
+  border: 1.5px solid var(--border);
+}
+
+.payout-status-bank-details-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-main);
 }
 
 /* Shared sub-form (Reference ID / etc.) */
@@ -303,21 +307,6 @@
   20%, 80% { transform: translateX(2px); }
   30%, 50%, 70% { transform: translateX(-4px); }
   40%, 60% { transform: translateX(4px); }
-}
-
-.payout-status-mark-done-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--primary);
-  cursor: pointer;
-  text-align: left;
-}
-
-.payout-status-mark-done-link:hover {
-  text-decoration: underline;
 }
 
 /* Bottom toast — success (fades after 2s) / error (matches same spot & timing) */
