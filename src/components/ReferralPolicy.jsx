@@ -6,7 +6,18 @@ import {
 } from "../utils/rewardConfigs";
 
 const FEE_HEAD_OPTIONS = ["Tuition Fees", "Examination Fees", "Registration Fee"];
-const COLUMN_COUNT = 11;
+const COLUMN_COUNT = 10;
+
+// Fixed minimum widths so the table doesn't reflow when the inline
+// "New configuration" inputs appear inside a course's dropdown.
+const COL = {
+  course: { width: '210px', minWidth: '210px' },
+  cost: { width: '140px', minWidth: '140px' },
+  referrer: { width: '150px', minWidth: '150px' },
+  referee: { width: '150px', minWidth: '150px' },
+  date: { width: '180px', minWidth: '180px' },
+  feeHead: { width: '180px', minWidth: '180px' },
+};
 
 // Default Effective From for a new configuration: the day after the last one ends, or —
 // when the last one is open-ended — tomorrow (but never on/before that config's own start).
@@ -247,19 +258,19 @@ export default function ReferralPolicy({ data, onAddConfig }) {
           <table className="custom-table">
             <thead>
               <tr>
-                <th>Course</th>
+                <th style={COL.course}>Course</th>
                 <th>Type</th>
 
                 {/* Clickable sort headers */}
-                <th onClick={() => handleHeaderClick("cost")} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                <th onClick={() => handleHeaderClick("cost")} style={{ ...COL.cost, cursor: 'pointer', userSelect: 'none' }}>
                   Course Cost {renderSortIndicator("cost")}
                 </th>
-                <th>Referrer Incentive (₹)</th>
-                <th>Referee Discount (% of cost)</th>
-                <th onClick={() => handleHeaderClick("effectiveFrom")} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                <th style={COL.referrer}>Referrer Incentive (₹)</th>
+                <th style={COL.referee}>Referee Discount (% of cost)</th>
+                <th onClick={() => handleHeaderClick("effectiveFrom")} style={{ ...COL.date, cursor: 'pointer', userSelect: 'none' }}>
                   Effective From {renderSortIndicator("effectiveFrom")}
                 </th>
-                <th>
+                <th style={COL.date}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                     Effective To
                     <span title="All referral activity — from the initial referral to the referee's enrollment — must be completed within this date.">
@@ -267,10 +278,9 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                     </span>
                   </span>
                 </th>
-                <th>Fee Head</th>
+                <th style={COL.feeHead}>Fee Head</th>
                 <th>Last Modified By</th>
                 <th>Last Modified On</th>
-                <th style={{ width: '100px', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -310,7 +320,6 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                         </span>
                       </td>
                       {renderConfigCells(active)}
-                      <td></td>
                     </tr>
 
                     {isExpanded && configs.map((c, i) => {
@@ -328,7 +337,6 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                           </td>
                           <td></td>
                           {renderConfigCells(c)}
-                          <td></td>
                         </tr>
                       );
                     })}
@@ -398,9 +406,9 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                               className="inline-edit-input"
                               value={newFrom}
                               onChange={(e) => { setNewFrom(e.target.value); setAddError(""); }}
-                              style={{ width: '125px', cursor: 'pointer' }}
+                              style={{ width: '130px', cursor: 'pointer' }}
                             />
-                            <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--danger-text)', maxWidth: '150px', lineHeight: '1.3' }}>
+                            <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--danger-text)', maxWidth: '130px', lineHeight: '1.3' }}>
                               {addError || (isOpenEnded(lastConfig.effectiveTo)
                                 ? (newFrom ? `Current config will end on ${formatDisplayDate(addDays(fromIsoDate(newFrom), -1))}` : "Pick a start date")
                                 : `Last config ends ${lastConfig.effectiveTo}`)}
@@ -414,7 +422,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             value={newTo}
                             min={newFrom || undefined}
                             onChange={(e) => { setNewTo(e.target.value); setAddError(""); }}
-                            style={{ width: '125px', cursor: 'pointer' }}
+                            style={{ width: '130px', cursor: 'pointer' }}
                           />
                         </td>
                         <td>
@@ -422,12 +430,11 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             className="inline-edit-input"
                             value={newFeeHead}
                             onChange={(e) => setNewFeeHead(e.target.value)}
-                            style={{ width: '125px', cursor: 'pointer' }}
+                            style={{ width: '130px', cursor: 'pointer' }}
                           >
                             {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
                           </select>
                         </td>
-                        <td></td>
                         <td></td>
                         <td></td>
                       </tr>
