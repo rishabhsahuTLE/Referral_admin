@@ -1298,6 +1298,29 @@ button, input, select, textarea {
 }
 
 /* Referral Policy edit inputs */
+/* Reward Master table: fixed layout so it fits without horizontal scroll */
+.reward-master-table {
+  table-layout: fixed;
+}
+
+.reward-master-table th,
+.reward-master-table td {
+  padding: 14px 12px;
+  overflow-wrap: anywhere;
+}
+
+.reward-master-table tr.course-row {
+  cursor: pointer;
+}
+
+.custom-table.reward-master-table tr.config-subrow td {
+  padding: 7px 12px;
+}
+
+.custom-table.reward-master-table tr.config-subrow td.config-subrow-label {
+  padding-left: 30px;
+}
+
 /* Reward Master: per-course configuration dropdown rows — compact and muted so they
    read as detail under the course row rather than as rows of the main table. */
 .custom-table tr.config-subrow td {
@@ -1309,9 +1332,8 @@ button, input, select, textarea {
 }
 
 .custom-table tr.config-subrow td.config-subrow-label {
-  padding-left: 44px;
+  padding-left: 30px;
   border-left: 3px solid transparent;
-  white-space: nowrap;
 }
 
 .custom-table tr.config-subrow.active td {

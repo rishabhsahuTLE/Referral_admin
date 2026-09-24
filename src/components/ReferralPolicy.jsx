@@ -8,15 +8,18 @@ import {
 const FEE_HEAD_OPTIONS = ["Tuition Fees", "Examination Fees", "Registration Fee"];
 const COLUMN_COUNT = 10;
 
-// Fixed minimum widths so the table doesn't reflow when the inline
-// "New configuration" inputs appear inside a course's dropdown.
+// Column widths for the fixed table layout: the table always fits its container (no
+// horizontal scroll) and columns don't reflow when the inline "New configuration"
+// inputs appear inside a course's dropdown.
 const COL = {
-  course: { width: '210px', minWidth: '210px' },
-  cost: { width: '140px', minWidth: '140px' },
-  referrer: { width: '150px', minWidth: '150px' },
-  referee: { width: '150px', minWidth: '150px' },
-  date: { width: '180px', minWidth: '180px' },
-  feeHead: { width: '180px', minWidth: '180px' },
+  course: { width: '15%' },
+  type: { width: '6%' },
+  cost: { width: '9%' },
+  referrer: { width: '10%' },
+  referee: { width: '11%' },
+  date: { width: '12%' },
+  feeHead: { width: '10%' },
+  modified: { width: '7.5%' },
 };
 
 // Default Effective From for a new configuration: the day after the last one ends, or —
@@ -255,11 +258,11 @@ export default function ReferralPolicy({ data, onAddConfig }) {
         </div>
 
         <div className="table-container">
-          <table className="custom-table">
+          <table className="custom-table reward-master-table">
             <thead>
               <tr>
                 <th style={COL.course}>Course</th>
-                <th>Type</th>
+                <th style={COL.type}>Type</th>
 
                 {/* Clickable sort headers */}
                 <th onClick={() => handleHeaderClick("cost")} style={{ ...COL.cost, cursor: 'pointer', userSelect: 'none' }}>
@@ -279,8 +282,8 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                   </span>
                 </th>
                 <th style={COL.feeHead}>Fee Head</th>
-                <th>Last Modified By</th>
-                <th>Last Modified On</th>
+                <th style={COL.modified}>Last Modified By</th>
+                <th style={COL.modified}>Last Modified On</th>
               </tr>
             </thead>
             <tbody>
@@ -293,11 +296,10 @@ export default function ReferralPolicy({ data, onAddConfig }) {
 
                 return (
                   <React.Fragment key={prog.name}>
-                    <tr>
+                    <tr className="course-row" onClick={() => toggleExpanded(prog.name)}>
                       <td style={{ fontWeight: '600' }}>
                         <button
                           type="button"
-                          onClick={() => toggleExpanded(prog.name)}
                           aria-expanded={isExpanded}
                           title={isExpanded ? "Hide configurations" : "Show all configurations"}
                           style={{
@@ -364,7 +366,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             className="inline-edit-input"
                             value={newCost}
                             onChange={(e) => setNewCost(e.target.value)}
-                            style={{ width: '90px' }}
+                            style={{ width: '100%' }}
                           />
                         </td>
                         <td>
@@ -375,7 +377,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             placeholder="e.g. 5000"
                             value={newReferrer}
                             onChange={(e) => setNewReferrer(e.target.value)}
-                            style={{ width: '95px' }}
+                            style={{ width: '100%' }}
                           />
                         </td>
                         <td>
@@ -390,7 +392,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                                 placeholder="e.g. 10"
                                 value={newReferee}
                                 onChange={(e) => setNewReferee(e.target.value)}
-                                style={{ width: '60px' }}
+                                style={{ width: '100%', minWidth: 0 }}
                               />
                               <span style={{ fontSize: '11px', fontWeight: '600' }}>%</span>
                             </div>
@@ -406,9 +408,9 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                               className="inline-edit-input"
                               value={newFrom}
                               onChange={(e) => { setNewFrom(e.target.value); setAddError(""); }}
-                              style={{ width: '130px', cursor: 'pointer' }}
+                              style={{ width: '100%', cursor: 'pointer' }}
                             />
-                            <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--danger-text)', maxWidth: '130px', lineHeight: '1.3' }}>
+                            <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--danger-text)', lineHeight: '1.3' }}>
                               {addError || (isOpenEnded(lastConfig.effectiveTo)
                                 ? (newFrom ? `Current config will end on ${formatDisplayDate(addDays(fromIsoDate(newFrom), -1))}` : "Pick a start date")
                                 : `Last config ends ${lastConfig.effectiveTo}`)}
@@ -422,7 +424,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             value={newTo}
                             min={newFrom || undefined}
                             onChange={(e) => { setNewTo(e.target.value); setAddError(""); }}
-                            style={{ width: '130px', cursor: 'pointer' }}
+                            style={{ width: '100%', cursor: 'pointer' }}
                           />
                         </td>
                         <td>
@@ -430,7 +432,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             className="inline-edit-input"
                             value={newFeeHead}
                             onChange={(e) => setNewFeeHead(e.target.value)}
-                            style={{ width: '130px', cursor: 'pointer' }}
+                            style={{ width: '100%', cursor: 'pointer' }}
                           >
                             {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
                           </select>
