@@ -1298,6 +1298,75 @@ button, input, select, textarea {
 }
 
 /* Referral Policy edit inputs */
+/* Reward Master: per-course configuration dropdown rows — compact and muted so they
+   read as detail under the course row rather than as rows of the main table. */
+.custom-table tr.config-subrow td {
+  padding: 7px 24px;
+  font-size: 11px;
+  color: var(--text-muted);
+  background-color: #f8f9fb;
+  border-bottom: 1px dashed var(--border);
+}
+
+.custom-table tr.config-subrow td.config-subrow-label {
+  padding-left: 44px;
+  border-left: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.custom-table tr.config-subrow.active td {
+  background-color: var(--primary-light);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.custom-table tr.config-subrow.active td.config-subrow-label {
+  border-left-color: var(--primary);
+}
+
+.custom-table tr.config-subrow-form td {
+  background-color: var(--info-bg);
+  color: var(--text-main);
+}
+
+.custom-table tr.config-subrow-footer td {
+  padding-top: 6px;
+  padding-bottom: 8px;
+}
+
+.custom-table tr.config-subrow .inline-edit-input {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.config-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: var(--text-main);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.config-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.config-btn-primary {
+  background-color: var(--info);
+  border-color: var(--info);
+  color: #ffffff;
+}
+
+.config-btn-primary:hover {
+  background-color: var(--info-text);
+}
+
 .inline-edit-input {
   width: 100%;
   padding: 6px 10px;

@@ -310,18 +310,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                         </span>
                       </td>
                       {renderConfigCells(active)}
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button
-                            className="action-icon-btn"
-                            onClick={() => startAdd(prog)}
-                            disabled={isAdding}
-                            title="Add New Configuration"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                      </td>
+                      <td></td>
                     </tr>
 
                     {isExpanded && configs.map((c, i) => {
@@ -329,17 +318,12 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                       return (
                         <tr
                           key={`${prog.name}-cfg-${i}`}
-                          style={{
-                            backgroundColor: isActive ? 'var(--primary-light)' : '#fafafa',
-                            fontWeight: isActive ? '600' : 'normal',
-                            color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
-                            fontSize: '13px'
-                          }}
+                          className={`config-subrow${isActive ? ' active' : ''}`}
                         >
-                          <td style={{ paddingLeft: '34px', borderLeft: `3px solid ${isActive ? 'var(--primary)' : 'transparent'}` }}>
+                          <td className="config-subrow-label">
                             Config {i + 1}
                             {isActive && (
-                              <span className="badge badge-clear" style={{ marginLeft: '8px', fontSize: '10px' }}>Active</span>
+                              <span className="badge badge-clear" style={{ marginLeft: '6px', fontSize: '9px', padding: '1px 6px' }}>Active</span>
                             )}
                           </td>
                           <td></td>
@@ -349,9 +333,21 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                       );
                     })}
 
-                    {isAdding && (
-                      <tr style={{ backgroundColor: 'var(--info-bg)' }}>
-                        <td style={{ paddingLeft: '34px', fontSize: '13px', fontWeight: '600' }}>New configuration</td>
+                    {isExpanded && !isAdding && (
+                      <tr className="config-subrow config-subrow-footer">
+                        <td colSpan={COLUMN_COUNT}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button type="button" className="config-btn config-btn-primary" onClick={() => startAdd(prog)}>
+                              <Plus size={12} /> Add New Configuration
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    {isExpanded && isAdding && (
+                      <tr className="config-subrow config-subrow-form">
+                        <td className="config-subrow-label">New configuration</td>
                         <td></td>
                         <td>
                           <input
@@ -360,7 +356,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             className="inline-edit-input"
                             value={newCost}
                             onChange={(e) => setNewCost(e.target.value)}
-                            style={{ width: '100px' }}
+                            style={{ width: '90px' }}
                           />
                         </td>
                         <td>
@@ -388,7 +384,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                                 onChange={(e) => setNewReferee(e.target.value)}
                                 style={{ width: '60px' }}
                               />
-                              <span style={{ fontSize: '13px', fontWeight: '600' }}>%</span>
+                              <span style={{ fontSize: '11px', fontWeight: '600' }}>%</span>
                             </div>
                             <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                               ({formatCurrency(Math.round((parseFloat(newCost || 0) * (parseFloat(newReferee || 0)) / 100)))})
@@ -402,7 +398,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                               className="inline-edit-input"
                               value={newFrom}
                               onChange={(e) => { setNewFrom(e.target.value); setAddError(""); }}
-                              style={{ width: '135px', cursor: 'pointer' }}
+                              style={{ width: '125px', cursor: 'pointer' }}
                             />
                             <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--danger-text)', maxWidth: '150px', lineHeight: '1.3' }}>
                               {addError || (isOpenEnded(lastConfig.effectiveTo)
@@ -418,7 +414,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             value={newTo}
                             min={newFrom || undefined}
                             onChange={(e) => { setNewTo(e.target.value); setAddError(""); }}
-                            style={{ width: '135px', cursor: 'pointer' }}
+                            style={{ width: '125px', cursor: 'pointer' }}
                           />
                         </td>
                         <td>
@@ -426,29 +422,26 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                             className="inline-edit-input"
                             value={newFeeHead}
                             onChange={(e) => setNewFeeHead(e.target.value)}
-                            style={{ width: '140px', cursor: 'pointer' }}
+                            style={{ width: '125px', cursor: 'pointer' }}
                           >
                             {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
                           </select>
                         </td>
                         <td></td>
                         <td></td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                            <button
-                              className="action-icon-btn save"
-                              onClick={() => saveAdd(prog)}
-                              title="Save Configuration"
-                            >
-                              <Save size={14} />
+                        <td></td>
+                      </tr>
+                    )}
+
+                    {isExpanded && isAdding && (
+                      <tr className="config-subrow config-subrow-form config-subrow-footer">
+                        <td colSpan={COLUMN_COUNT}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <button type="button" className="config-btn" onClick={cancelAdd}>
+                              <X size={12} /> Cancel
                             </button>
-                            <button
-                              className="action-icon-btn"
-                              onClick={cancelAdd}
-                              title="Cancel"
-                              style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
-                            >
-                              <X size={14} />
+                            <button type="button" className="config-btn config-btn-primary" onClick={() => saveAdd(prog)}>
+                              <Save size={12} /> Save
                             </button>
                           </div>
                         </td>
