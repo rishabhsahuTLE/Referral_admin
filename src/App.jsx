@@ -31,6 +31,7 @@ import Dashboard from "./components/Dashboard";
 import Reports from "./components/Reports";
 import DuplicateLeads from "./components/DuplicateLeads";
 import ReferralPolicy from "./components/ReferralPolicy";
+import { getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate, addDays, pickConfigFields } from "./utils/rewardConfigs";
 import ReferralPayouts from "./components/ReferralPayouts";
 import PaymentHistory from "./components/PaymentHistory";
 
@@ -168,25 +169,29 @@ Approved rewards will be credited to the bank account registered in the student 
     });
   };
 
-  // Handler to update referral policy row
-  const handleUpdatePolicy = (updatedProg) => {
+  // Handler to add a new dated reward configuration to an existing course. An open-ended
+  // latest configuration is closed the day before the new one starts; the course's
+  // top-level fields then mirror whichever configuration is active today, so other
+  // screens (Dashboard, Reports) keep reading them as before.
+  const handleAddConfig = (courseName, newConfig) => {
     const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     setUniData((prevData) => {
       const updatedPrograms = prevData[selectedUni].programs.map((prog) => {
-        if (prog.name === updatedProg.name) {
-          return {
-            ...prog,
-            cost: updatedProg.cost,
-            referrerIncentive: updatedProg.referrerIncentive,
-            refereeDiscount: updatedProg.refereeDiscount,
-            effectiveFrom: updatedProg.effectiveFrom,
-            effectiveTo: updatedProg.effectiveTo,
-            feeHead: updatedProg.feeHead,
-            lastModifiedBy: "Admin User",
-            lastModifiedOn: today
+        if (prog.name !== courseName) return prog;
+
+        const existing = getConfigs(prog);
+        const last = existing[existing.length - 1];
+        if (isOpenEnded(last.effectiveTo)) {
+          existing[existing.length - 1] = {
+            ...last,
+            effectiveTo: formatDisplayDate(addDays(parseDisplayDate(newConfig.effectiveFrom), -1))
           };
         }
-        return prog;
+
+        const configs = getConfigs({
+          configs: [...existing, { ...newConfig, lastModifiedBy: "Admin User", lastModifiedOn: today }]
+        });
+        return { ...prog, configs, ...getActiveConfig(configs) };
       });
 
       return {
@@ -252,7 +257,7 @@ Approved rewards will be credited to the bank account registered in the student 
   // Handlers for the lifted Referral Payouts records — shared between ReferralPayouts
   // (which can advance/edit them) and Payment History (read-only, filtered to Payment Done).
   // Each scopes its update into payoutRecordsByUni[selectedUni], same spread pattern as
-  // handleUpdateDuplicateStatus/handleUpdatePolicy/handleFlagReferrer below.
+  // handleUpdateDuplicateStatus/handleAddConfig/handleFlagReferrer below.
   const handleMarkPaymentDone = (itemId, { transactionId, utrNumber }) => {
     const today = new Date().toLocaleDateString('en-IN');
     setPayoutRecordsByUni((prev) => ({
@@ -336,7 +341,7 @@ Approved rewards will be credited to the bank account registered in the student 
       inProcess: 0,
       referrerData: { converted: 0, flagged: 0, inProcess: 0 },
       refereeData: { converted: 0, flagged: 0, inProcess: 0 }
-    }));
+    })).map(p => ({ ...p, configs: [pickConfigFields(p)] }));
 
     setUniData((prevData) => ({
       ...prevData,
@@ -389,7 +394,7 @@ Approved rewards will be credited to the bank account registered in the student 
         return (
           <ReferralPolicy 
             data={currentUniData} 
-            onUpdatePolicy={handleUpdatePolicy}
+            onAddConfig={handleAddConfig}
           />
         );
 
@@ -468,7 +473,7 @@ Approved rewards will be credited to the bank account registered in the student 
                   <Plus size={15} /> Add
                 </button>
               </div>
-              <ReferralPolicy data={currentUniData} onUpdatePolicy={handleUpdatePolicy} />
+              <ReferralPolicy data={currentUniData} onAddConfig={handleAddConfig} />
             </div>
 
             {/* FAQ Management + Terms & Conditions temporarily disabled — guarded with

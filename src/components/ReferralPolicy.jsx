@@ -1,23 +1,40 @@
 import React, { useState } from "react";
-import { Search, Edit, Save, X, Info, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Search, Save, X, Info, ArrowUpDown, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import {
+  getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate,
+  toIsoDate, fromIsoDate, addDays, startOfToday
+} from "../utils/rewardConfigs";
 
 const FEE_HEAD_OPTIONS = ["Tuition Fees", "Examination Fees", "Registration Fee"];
+const COLUMN_COUNT = 11;
 
-export default function ReferralPolicy({ data, onUpdatePolicy }) {
+// Default Effective From for a new configuration: the day after the last one ends, or —
+// when the last one is open-ended — tomorrow (but never on/before that config's own start).
+function getDefaultFrom(configs) {
+  const last = configs[configs.length - 1];
+  if (!isOpenEnded(last.effectiveTo)) return addDays(parseDisplayDate(last.effectiveTo), 1);
+  const tomorrow = addDays(startOfToday(), 1);
+  const afterLastStart = addDays(parseDisplayDate(last.effectiveFrom) ?? startOfToday(), 1);
+  return tomorrow > afterLastStart ? tomorrow : afterLastStart;
+}
+
+export default function ReferralPolicy({ data, onAddConfig }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingRowIdx, setEditingRowIdx] = useState(null);
+  const [expandedCourses, setExpandedCourses] = useState(() => new Set());
 
   // Sorting state
   const [sortField, setSortField] = useState("none"); // none, cost, effectiveFrom
   const [sortOrder, setSortOrder] = useState("asc"); // asc, desc
 
-  // Local state for inline edits
-  const [editCost, setEditCost] = useState("");
-  const [editReferrer, setEditReferrer] = useState("");
-  const [editReferee, setEditReferee] = useState("");
-  const [editEffective, setEditEffective] = useState("");
-  const [editEffectiveTo, setEditEffectiveTo] = useState("");
-  const [editFeeHead, setEditFeeHead] = useState(FEE_HEAD_OPTIONS[0]);
+  // "Add configuration" form state — only one course's form is open at a time
+  const [addingFor, setAddingFor] = useState(null);
+  const [newCost, setNewCost] = useState("");
+  const [newReferrer, setNewReferrer] = useState("");
+  const [newReferee, setNewReferee] = useState("");
+  const [newFrom, setNewFrom] = useState("");
+  const [newTo, setNewTo] = useState("");
+  const [newFeeHead, setNewFeeHead] = useState(FEE_HEAD_OPTIONS[0]);
+  const [addError, setAddError] = useState("");
 
   const { programs } = data;
 
@@ -34,9 +51,8 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
     let valB = b[sortField];
 
     if (sortField === "effectiveFrom") {
-      // Parse date e.g. "01 Jun 2026"
-      valA = new Date(valA).getTime() || 0;
-      valB = new Date(valB).getTime() || 0;
+      valA = parseDisplayDate(valA)?.getTime() || 0;
+      valB = parseDisplayDate(valB)?.getTime() || 0;
     } else {
       valA = parseFloat(valA) || 0;
       valB = parseFloat(valB) || 0;
@@ -57,32 +73,72 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
     }).format(amount);
   };
 
-  const startEdit = (idx, prog) => {
-    setEditingRowIdx(idx);
-    setEditCost(prog.cost);
-    setEditReferrer(prog.referrerIncentive);
-    setEditReferee(prog.refereeDiscount); // This is a percentage e.g. 10
-    setEditEffective(prog.effectiveFrom);
-    setEditEffectiveTo(prog.effectiveTo && prog.effectiveTo !== "-" ? prog.effectiveTo : "");
-    setEditFeeHead(prog.feeHead && FEE_HEAD_OPTIONS.includes(prog.feeHead) ? prog.feeHead : FEE_HEAD_OPTIONS[0]);
+  const toggleExpanded = (name) => {
+    setExpandedCourses(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
   };
 
-  const cancelEdit = () => {
-    setEditingRowIdx(null);
+  const startAdd = (prog) => {
+    const configs = getConfigs(prog);
+    const active = getActiveConfig(configs);
+    setAddingFor(prog.name);
+    setExpandedCourses(prev => new Set(prev).add(prog.name));
+    setNewCost(active.cost ?? "");
+    setNewReferrer("");
+    setNewReferee("");
+    setNewFrom(toIsoDate(getDefaultFrom(configs)));
+    setNewTo("");
+    setNewFeeHead(active.feeHead && FEE_HEAD_OPTIONS.includes(active.feeHead) ? active.feeHead : FEE_HEAD_OPTIONS[0]);
+    setAddError("");
   };
 
-  const saveEdit = (progName) => {
-    const updatedProg = {
-      name: progName,
-      cost: parseFloat(editCost) || 0,
-      referrerIncentive: parseFloat(editReferrer) || 0,
-      refereeDiscount: parseFloat(editReferee) || 0, // saved as percentage
-      effectiveFrom: editEffective,
-      effectiveTo: editEffectiveTo.trim() || "-",
-      feeHead: editFeeHead,
-    };
-    onUpdatePolicy(updatedProg);
-    setEditingRowIdx(null);
+  const cancelAdd = () => {
+    setAddingFor(null);
+    setAddError("");
+  };
+
+  const saveAdd = (prog) => {
+    if (newCost === "" || newReferrer === "" || newReferee === "" || !newFrom || !newTo) {
+      setAddError("All fields are required.");
+      return;
+    }
+    const from = fromIsoDate(newFrom);
+    const to = fromIsoDate(newTo);
+    if (to < from) {
+      setAddError("Effective To must be on or after Effective From.");
+      return;
+    }
+
+    // Reject any overlap. The open-ended latest config gets closed the day before `from`,
+    // so it only conflicts when the new config starts on or before its own start date.
+    const configs = getConfigs(prog);
+    const clash = configs.find((c, i) => {
+      const cFrom = parseDisplayDate(c.effectiveFrom);
+      if (!cFrom) return false;
+      if (isOpenEnded(c.effectiveTo)) {
+        return i === configs.length - 1 ? from <= cFrom : to >= cFrom;
+      }
+      const cTo = parseDisplayDate(c.effectiveTo);
+      return from <= cTo && to >= cFrom;
+    });
+    if (clash) {
+      setAddError(`Overlaps ${clash.effectiveFrom} – ${isOpenEnded(clash.effectiveTo) ? "open" : clash.effectiveTo}.`);
+      return;
+    }
+
+    onAddConfig(prog.name, {
+      cost: parseFloat(newCost) || 0,
+      referrerIncentive: parseFloat(newReferrer) || 0,
+      refereeDiscount: parseFloat(newReferee) || 0, // saved as percentage
+      effectiveFrom: formatDisplayDate(from),
+      effectiveTo: formatDisplayDate(to),
+      feeHead: newFeeHead,
+    });
+    setAddingFor(null);
+    setAddError("");
   };
 
   const handleHeaderClick = (field) => {
@@ -100,6 +156,20 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
     return sortOrder === "asc" ? " ▲" : " ▼";
   };
 
+  // Read-only cells for one configuration (cost → last modified on)
+  const renderConfigCells = (c) => (
+    <>
+      <td>{formatCurrency(c.cost)}</td>
+      <td>{formatCurrency(c.referrerIncentive)}</td>
+      <td>{`${c.refereeDiscount}% (${formatCurrency(Math.round((c.cost * c.refereeDiscount) / 100))})`}</td>
+      <td>{c.effectiveFrom}</td>
+      <td>{c.effectiveTo ?? "-"}</td>
+      <td>{c.feeHead ?? "-"}</td>
+      <td style={{ color: 'var(--text-muted)' }}>{c.lastModifiedBy ?? "-"}</td>
+      <td style={{ color: 'var(--text-muted)' }}>{c.lastModifiedOn ?? "-"}</td>
+    </>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
@@ -107,7 +177,7 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
       <div className="policy-banner">
         <Info className="policy-icon" size={18} />
         <div>
-          <strong>Reward Settings Control.</strong> You can search and edit course costs, referrer incentives, and referee discounts. Click column headers or use the sort dropdown to organize records by cost or effective dates.
+          <strong>Reward Settings Control.</strong> Expand a course to see all of its reward configurations, and use + to add a new dated configuration (date ranges cannot overlap). Click column headers or use the sort dropdown to organize records by cost or effective dates.
         </div>
       </div>
 
@@ -204,146 +274,192 @@ export default function ReferralPolicy({ data, onUpdatePolicy }) {
               </tr>
             </thead>
             <tbody>
-              {sortedPrograms.map((prog, idx) => {
-                const isEditing = editingRowIdx === idx;
-                // Find matching index in unfiltered programs list to save
-                const programOriginalIdx = programs.findIndex(p => p.name === prog.name);
+              {sortedPrograms.map((prog) => {
+                const configs = getConfigs(prog);
+                const active = getActiveConfig(configs);
+                const isExpanded = expandedCourses.has(prog.name);
+                const isAdding = addingFor === prog.name;
+                const lastConfig = configs[configs.length - 1];
 
                 return (
-                  <tr key={idx}>
-                    <td style={{ fontWeight: '600' }}>{prog.name}</td>
-                    <td>
-                      <span className={`badge ${prog.type === 'UG' ? 'badge-applicant' : 'badge-enrolled'}`}>
-                        {prog.type}
-                      </span>
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          className="inline-edit-input"
-                          value={editCost}
-                          onChange={(e) => setEditCost(e.target.value)}
-                          style={{ width: '100px' }}
-                        />
-                      ) : (
-                        formatCurrency(prog.cost)
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          className="inline-edit-input"
-                          value={editReferrer}
-                          onChange={(e) => setEditReferrer(e.target.value)}
-                          style={{ width: '95px' }}
-                        />
-                      ) : (
-                        formatCurrency(prog.referrerIncentive)
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <input
-                              type="number"
-                              className="inline-edit-input"
-                              value={editReferee}
-                              onChange={(e) => setEditReferee(e.target.value)}
-                              style={{ width: '60px' }}
-                            />
-                            <span style={{ fontSize: '13px', fontWeight: '600' }}>%</span>
-                          </div>
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                            ({formatCurrency(Math.round((parseFloat(editCost || 0) * (parseFloat(editReferee || 0)) / 100)))})
-                          </span>
-                        </div>
-                      ) : (
-                        `${prog.refereeDiscount}% (${formatCurrency(Math.round((prog.cost * prog.refereeDiscount) / 100))})`
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="inline-edit-input"
-                          value={editEffective}
-                          onChange={(e) => setEditEffective(e.target.value)}
-                          style={{ width: '110px' }}
-                        />
-                      ) : (
-                        prog.effectiveFrom
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          className="inline-edit-input"
-                          placeholder="e.g. 31 May 2027"
-                          value={editEffectiveTo}
-                          onChange={(e) => setEditEffectiveTo(e.target.value)}
-                          style={{ width: '110px' }}
-                        />
-                      ) : (
-                        prog.effectiveTo ?? "-"
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <select
-                          className="inline-edit-input"
-                          value={editFeeHead}
-                          onChange={(e) => setEditFeeHead(e.target.value)}
-                          style={{ width: '140px', cursor: 'pointer' }}
+                  <React.Fragment key={prog.name}>
+                    <tr>
+                      <td style={{ fontWeight: '600' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(prog.name)}
+                          aria-expanded={isExpanded}
+                          title={isExpanded ? "Hide configurations" : "Show all configurations"}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'none',
+                            border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', color: 'inherit', textAlign: 'left'
+                          }}
                         >
-                          {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
-                        </select>
-                      ) : (
-                        prog.feeHead ?? "-"
-                      )}
-                    </td>
-                    <td style={{ color: 'var(--text-muted)' }}>{prog.lastModifiedBy ?? "-"}</td>
-                    <td style={{ color: 'var(--text-muted)' }}>{prog.lastModifiedOn ?? "-"}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        {isEditing ? (
-                          <>
+                          {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                          <span>
+                            {prog.name}
+                            <span style={{ display: 'block', fontSize: '10px', fontWeight: '500', color: 'var(--text-muted)' }}>
+                              {configs.length} configuration{configs.length === 1 ? "" : "s"}
+                            </span>
+                          </span>
+                        </button>
+                      </td>
+                      <td>
+                        <span className={`badge ${prog.type === 'UG' ? 'badge-applicant' : 'badge-enrolled'}`}>
+                          {prog.type}
+                        </span>
+                      </td>
+                      {renderConfigCells(active)}
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          <button
+                            className="action-icon-btn"
+                            onClick={() => startAdd(prog)}
+                            disabled={isAdding}
+                            title="Add New Configuration"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {isExpanded && configs.map((c, i) => {
+                      const isActive = c === active;
+                      return (
+                        <tr
+                          key={`${prog.name}-cfg-${i}`}
+                          style={{
+                            backgroundColor: isActive ? 'var(--primary-light)' : '#fafafa',
+                            fontWeight: isActive ? '600' : 'normal',
+                            color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+                            fontSize: '13px'
+                          }}
+                        >
+                          <td style={{ paddingLeft: '34px', borderLeft: `3px solid ${isActive ? 'var(--primary)' : 'transparent'}` }}>
+                            Config {i + 1}
+                            {isActive && (
+                              <span className="badge badge-clear" style={{ marginLeft: '8px', fontSize: '10px' }}>Active</span>
+                            )}
+                          </td>
+                          <td></td>
+                          {renderConfigCells(c)}
+                          <td></td>
+                        </tr>
+                      );
+                    })}
+
+                    {isAdding && (
+                      <tr style={{ backgroundColor: 'var(--info-bg)' }}>
+                        <td style={{ paddingLeft: '34px', fontSize: '13px', fontWeight: '600' }}>New configuration</td>
+                        <td></td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            className="inline-edit-input"
+                            value={newCost}
+                            onChange={(e) => setNewCost(e.target.value)}
+                            style={{ width: '100px' }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            className="inline-edit-input"
+                            placeholder="e.g. 5000"
+                            value={newReferrer}
+                            onChange={(e) => setNewReferrer(e.target.value)}
+                            style={{ width: '95px' }}
+                          />
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                className="inline-edit-input"
+                                placeholder="e.g. 10"
+                                value={newReferee}
+                                onChange={(e) => setNewReferee(e.target.value)}
+                                style={{ width: '60px' }}
+                              />
+                              <span style={{ fontSize: '13px', fontWeight: '600' }}>%</span>
+                            </div>
+                            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                              ({formatCurrency(Math.round((parseFloat(newCost || 0) * (parseFloat(newReferee || 0)) / 100)))})
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <input
+                              type="date"
+                              className="inline-edit-input"
+                              value={newFrom}
+                              onChange={(e) => { setNewFrom(e.target.value); setAddError(""); }}
+                              style={{ width: '135px', cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--danger-text)', maxWidth: '150px', lineHeight: '1.3' }}>
+                              {addError || (isOpenEnded(lastConfig.effectiveTo)
+                                ? (newFrom ? `Current config will end on ${formatDisplayDate(addDays(fromIsoDate(newFrom), -1))}` : "Pick a start date")
+                                : `Last config ends ${lastConfig.effectiveTo}`)}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <input
+                            type="date"
+                            className="inline-edit-input"
+                            value={newTo}
+                            min={newFrom || undefined}
+                            onChange={(e) => { setNewTo(e.target.value); setAddError(""); }}
+                            style={{ width: '135px', cursor: 'pointer' }}
+                          />
+                        </td>
+                        <td>
+                          <select
+                            className="inline-edit-input"
+                            value={newFeeHead}
+                            onChange={(e) => setNewFeeHead(e.target.value)}
+                            style={{ width: '140px', cursor: 'pointer' }}
+                          >
+                            {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
+                          </select>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             <button
                               className="action-icon-btn save"
-                              onClick={() => saveEdit(prog.name)}
-                              title="Save Policy Changes"
+                              onClick={() => saveAdd(prog)}
+                              title="Save Configuration"
                             >
                               <Save size={14} />
                             </button>
                             <button
                               className="action-icon-btn"
-                              onClick={cancelEdit}
-                              title="Cancel Edit"
+                              onClick={cancelAdd}
+                              title="Cancel"
                               style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
                             >
                               <X size={14} />
                             </button>
-                          </>
-                        ) : (
-                          <button
-                            className="action-icon-btn"
-                            onClick={() => startEdit(programOriginalIdx, prog)}
-                            title="Edit Referral Policy Row"
-                          >
-                            <Edit size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
               {sortedPrograms.length === 0 && (
                 <tr>
-                  <td colSpan="10" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                  <td colSpan={COLUMN_COUNT} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
                     No policy configurations found matching "{searchTerm}"
                   </td>
                 </tr>
