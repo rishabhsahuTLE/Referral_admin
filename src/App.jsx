@@ -1788,16 +1788,18 @@ Approved rewards will be credited to the bank account registered in the student 
                         </div>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => { setCourseSearchOpen(false); setCourseSearchTerm(""); }}
-                      style={{
-                        marginTop: '6px', background: 'none', border: 'none', padding: 0,
-                        fontSize: '12px', fontWeight: '600', color: '#888', cursor: 'pointer'
-                      }}
-                    >
-                      Done
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setCourseSearchOpen(false); setCourseSearchTerm(""); }}
+                        style={{
+                          background: 'var(--info)', border: 'none', borderRadius: '6px', padding: '6px 16px',
+                          fontSize: '12px', fontWeight: '600', color: '#ffffff', cursor: 'pointer'
+                        }}
+                      >
+                        Done
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1881,6 +1883,26 @@ Approved rewards will be credited to the bank account registered in the student 
                 />
               </div>
 
+              {/* Fee Head */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
+                  Fee Head
+                </label>
+                <select
+                  value={feeHead}
+                  onChange={e => setFeeHead(e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 14px', border: '1.5px solid #ddd',
+                    borderRadius: '8px', fontSize: '14px', outline: 'none',
+                    backgroundColor: '#ffffff', cursor: 'pointer'
+                  }}
+                >
+                  <option value="Tuition Fees">Tuition Fees</option>
+                  <option value="Examination Fees">Examination Fees</option>
+                  <option value="Registration Fee">Registration Fee</option>
+                </select>
+              </div>
+
               {/* Effective From */}
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
@@ -1916,26 +1938,6 @@ Approved rewards will be credited to the bank account registered in the student 
                     cursor: 'pointer'
                   }}
                 />
-              </div>
-
-              {/* Fee Head */}
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
-                  Fee Head
-                </label>
-                <select
-                  value={feeHead}
-                  onChange={e => setFeeHead(e.target.value)}
-                  style={{
-                    width: '100%', padding: '10px 14px', border: '1.5px solid #ddd',
-                    borderRadius: '8px', fontSize: '14px', outline: 'none',
-                    backgroundColor: '#ffffff', cursor: 'pointer'
-                  }}
-                >
-                  <option value="Tuition Fees">Tuition Fees</option>
-                  <option value="Examination Fees">Examination Fees</option>
-                  <option value="Registration Fee">Registration Fee</option>
-                </select>
               </div>
 
               {addProgramError && (
