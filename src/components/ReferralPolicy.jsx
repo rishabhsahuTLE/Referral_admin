@@ -280,8 +280,8 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                   </span>
                 </th>
                 <th style={COL.feeHead}>Fee Head</th>
-                <th style={COL.modified}>Last Modified By</th>
-                <th style={COL.modified}>Last Modified On</th>
+                <th style={COL.modified}>Config Added By</th>
+                <th style={COL.modified}>Config Added On</th>
               </tr>
             </thead>
             <tbody>
