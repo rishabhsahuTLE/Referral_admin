@@ -42,7 +42,6 @@ export default function ReferralPolicy({ data, onAddConfig }) {
 
   // "Add configuration" form state — only one course's form is open at a time
   const [addingFor, setAddingFor] = useState(null);
-  const [newCost, setNewCost] = useState("");
   const [newReferrer, setNewReferrer] = useState("");
   const [newReferee, setNewReferee] = useState("");
   const [newFrom, setNewFrom] = useState("");
@@ -100,7 +99,6 @@ export default function ReferralPolicy({ data, onAddConfig }) {
     const active = getActiveConfig(configs);
     setAddingFor(prog.name);
     setExpandedCourses(prev => new Set(prev).add(prog.name));
-    setNewCost(active.cost ?? "");
     setNewReferrer("");
     setNewReferee("");
     setNewFrom(toIsoDate(getDefaultFrom(configs)));
@@ -115,7 +113,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
   };
 
   const saveAdd = (prog) => {
-    if (newCost === "" || newReferrer === "" || newReferee === "" || !newFrom || !newTo) {
+    if (newReferrer === "" || newReferee === "" || !newFrom || !newTo) {
       setAddError("All fields are required.");
       return;
     }
@@ -144,7 +142,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
     }
 
     onAddConfig(prog.name, {
-      cost: parseFloat(newCost) || 0,
+      cost: getActiveConfig(configs).cost, // course cost comes from UMS, not editable here
       referrerIncentive: parseFloat(newReferrer) || 0,
       refereeDiscount: parseFloat(newReferee) || 0, // saved as percentage
       effectiveFrom: formatDisplayDate(from),
@@ -360,14 +358,9 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                         <td className="config-subrow-label">New configuration</td>
                         <td></td>
                         <td>
-                          <input
-                            type="number"
-                            min="0"
-                            className="inline-edit-input"
-                            value={newCost}
-                            onChange={(e) => setNewCost(e.target.value)}
-                            style={{ width: '100%' }}
-                          />
+                          <span title="Course cost is fetched from UMS and can't be edited here.">
+                            {formatCurrency(active.cost)}
+                          </span>
                         </td>
                         <td>
                           <input
@@ -397,7 +390,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                               <span style={{ fontSize: '11px', fontWeight: '600' }}>%</span>
                             </div>
                             <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                              ({formatCurrency(Math.round((parseFloat(newCost || 0) * (parseFloat(newReferee || 0)) / 100)))})
+                              ({formatCurrency(Math.round((active.cost * (parseFloat(newReferee || 0)) / 100)))})
                             </span>
                           </div>
                         </td>
