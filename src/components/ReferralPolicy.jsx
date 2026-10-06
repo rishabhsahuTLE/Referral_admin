@@ -358,23 +358,29 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                         <td className="config-subrow-label">New configuration</td>
                         <td></td>
                         <td>
-                          <span title="Course cost is fetched from UMS and can't be edited here.">
-                            {formatCurrency(active.cost)}
-                          </span>
+                          <div className="config-form-field">
+                            <span title="Course cost is fetched from UMS and can't be edited here.">
+                              {formatCurrency(active.cost)}
+                            </span>
+                            <span className="config-form-hint"></span>
+                          </div>
                         </td>
                         <td>
-                          <input
-                            type="number"
-                            min="0"
-                            className="inline-edit-input"
-                            placeholder="e.g. 5000"
-                            value={newReferrer}
-                            onChange={(e) => setNewReferrer(e.target.value)}
-                            style={{ width: '100%' }}
-                          />
+                          <div className="config-form-field">
+                            <input
+                              type="number"
+                              min="0"
+                              className="inline-edit-input"
+                              placeholder="e.g. 5000"
+                              value={newReferrer}
+                              onChange={(e) => setNewReferrer(e.target.value)}
+                              style={{ width: '100%' }}
+                            />
+                            <span className="config-form-hint"></span>
+                          </div>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div className="config-form-field">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <input
                                 type="number"
@@ -389,13 +395,13 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                               />
                               <span style={{ fontSize: '11px', fontWeight: '600' }}>%</span>
                             </div>
-                            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                            <span className="config-form-hint">
                               ({formatCurrency(Math.round((active.cost * (parseFloat(newReferee || 0)) / 100)))})
                             </span>
                           </div>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div className="config-form-field">
                             <input
                               type="date"
                               className="inline-edit-input"
@@ -403,7 +409,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                               onChange={(e) => { setNewFrom(e.target.value); setAddError(""); }}
                               style={{ width: '100%', cursor: 'pointer' }}
                             />
-                            <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--danger-text)', lineHeight: '1.3' }}>
+                            <span className={`config-form-hint${addError ? ' error' : ''}`}>
                               {addError || (isOpenEnded(lastConfig.effectiveTo)
                                 ? (newFrom ? `Current config will end on ${formatDisplayDate(addDays(fromIsoDate(newFrom), -1))}` : "Pick a start date")
                                 : `Last config ends ${lastConfig.effectiveTo}`)}
@@ -411,24 +417,30 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                           </div>
                         </td>
                         <td>
-                          <input
-                            type="date"
-                            className="inline-edit-input"
-                            value={newTo}
-                            min={newFrom || undefined}
-                            onChange={(e) => { setNewTo(e.target.value); setAddError(""); }}
-                            style={{ width: '100%', cursor: 'pointer' }}
-                          />
+                          <div className="config-form-field">
+                            <input
+                              type="date"
+                              className="inline-edit-input"
+                              value={newTo}
+                              min={newFrom || undefined}
+                              onChange={(e) => { setNewTo(e.target.value); setAddError(""); }}
+                              style={{ width: '100%', cursor: 'pointer' }}
+                            />
+                            <span className="config-form-hint"></span>
+                          </div>
                         </td>
                         <td>
-                          <select
-                            className="inline-edit-input"
-                            value={newFeeHead}
-                            onChange={(e) => setNewFeeHead(e.target.value)}
-                            style={{ width: '100%', cursor: 'pointer' }}
-                          >
-                            {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
-                          </select>
+                          <div className="config-form-field">
+                            <select
+                              className="inline-edit-input"
+                              value={newFeeHead}
+                              onChange={(e) => setNewFeeHead(e.target.value)}
+                              style={{ width: '100%', cursor: 'pointer' }}
+                            >
+                              {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
+                            </select>
+                            <span className="config-form-hint"></span>
+                          </div>
                         </td>
                         <td></td>
                         <td></td>

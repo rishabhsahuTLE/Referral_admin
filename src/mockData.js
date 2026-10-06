@@ -110,6 +110,48 @@ function withPolicyDefaults(programs) {
   }));
 }
 
+const round100 = (n) => Math.round(n / 100) * 100;
+
+// Synthesizes 2 historical configurations before each program's existing (live) one, so
+// expanding a course in Reward Master shows real multi-year history instead of a single
+// config. A deliberate gap sits between the oldest and middle configuration — gaps are
+// allowed, only overlaps are rejected (see saveAdd in ReferralPolicy.jsx).
+function withConfigHistory(programs) {
+  return programs.map((p) => {
+    const live = {
+      cost: p.cost,
+      referrerIncentive: p.referrerIncentive,
+      refereeDiscount: p.refereeDiscount,
+      effectiveFrom: p.effectiveFrom,
+      effectiveTo: p.effectiveTo,
+      feeHead: p.feeHead,
+      lastModifiedBy: "Admin User",
+      lastModifiedOn: "20 May 2026",
+    };
+    const middle = {
+      cost: round100(p.cost * 0.97),
+      referrerIncentive: round100(p.referrerIncentive * 0.9),
+      refereeDiscount: Math.max(0, p.refereeDiscount - 1),
+      effectiveFrom: "15 Jun 2025",
+      effectiveTo: "31 May 2026",
+      feeHead: p.feeHead,
+      lastModifiedBy: "Admin User",
+      lastModifiedOn: "10 Jun 2025",
+    };
+    const oldest = {
+      cost: round100(p.cost * 0.92),
+      referrerIncentive: round100(p.referrerIncentive * 0.8),
+      refereeDiscount: Math.max(0, p.refereeDiscount - 2),
+      effectiveFrom: "01 Jun 2024",
+      effectiveTo: "31 May 2025",
+      feeHead: p.feeHead,
+      lastModifiedBy: "Admin User",
+      lastModifiedOn: "25 May 2024",
+    };
+    return { ...p, configs: [oldest, middle, live] };
+  });
+}
+
 export const DEFAULT_NUDGE_MESSAGE = "Bank details are not available.";
 const PAYOUT_POC_NAME = "Rishabh Sahu";
 const PAYOUT_POC_PHONE = "+91 98765 43210";
@@ -538,7 +580,7 @@ export const initialUniversityData = {
       rewardsPaid: 445000,
       inProgress: 34
     },
-    programs: withPolicyDefaults([
+    programs: withConfigHistory(withPolicyDefaults([
       { name: "B.Tech CSE", converted: 24, leads: 36, cost: 150000, referralPercent: 6.67, referrerIncentive: 5000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 5, inProcess: 7, referrerData: { converted: 8, flagged: 2, inProcess: 3 }, refereeData: { converted: 24, flagged: 5, inProcess: 7 } },
       { name: "B.Tech AI/ML", converted: 18, leads: 25, cost: 180000, referralPercent: 5.56, referrerIncentive: 5000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 3, inProcess: 4, referrerData: { converted: 5, flagged: 1, inProcess: 2 }, refereeData: { converted: 18, flagged: 3, inProcess: 4 } },
       { name: "B.Tech ECE", converted: 12, leads: 27, cost: 140000, referralPercent: 5.71, referrerIncentive: 4000, refereeDiscount: 8, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 4, inProcess: 11, referrerData: { converted: 3, flagged: 1, inProcess: 4 }, refereeData: { converted: 12, flagged: 4, inProcess: 11 } },
@@ -546,7 +588,7 @@ export const initialUniversityData = {
       { name: "MBA Marketing", converted: 11, leads: 18, cost: 190000, referralPercent: 5.26, referrerIncentive: 5000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "PG", flagged: 3, inProcess: 4, referrerData: { converted: 3, flagged: 1, inProcess: 1 }, refereeData: { converted: 11, flagged: 3, inProcess: 4 } },
       { name: "MCA", converted: 7, leads: 11, cost: 120000, referralPercent: 8.33, referrerIncentive: 5000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "PG", flagged: 1, inProcess: 3, referrerData: { converted: 2, flagged: 0, inProcess: 1 }, refereeData: { converted: 7, flagged: 1, inProcess: 3 } },
       { name: "B.Sc Data Science", converted: 2, leads: 4, cost: 90000, referralPercent: 10.00, referrerIncentive: 4500, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 1, inProcess: 1, referrerData: { converted: 0, flagged: 0, inProcess: 0 }, refereeData: { converted: 2, flagged: 1, inProcess: 1 } }
-    ]),
+    ])),
     referrers: [
       { name: "Aditya Verma", count: 12, converted: 8 },
       { name: "Kavya Suresh", count: 11, converted: 7 },
@@ -624,13 +666,13 @@ export const initialUniversityData = {
       rewardsPaid: 850000,
       inProgress: 55
     },
-    programs: withPolicyDefaults([
+    programs: withConfigHistory(withPolicyDefaults([
       { name: "B.Tech CSE", converted: 45, leads: 60, cost: 220000, referralPercent: 8.33, referrerIncentive: 9000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 8, inProcess: 7, referrerData: { converted: 12, flagged: 3, inProcess: 2 }, refereeData: { converted: 45, flagged: 8, inProcess: 7 } },
       { name: "B.Tech Data Science", converted: 30, leads: 48, cost: 210000, referralPercent: 10.00, referrerIncentive: 10000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 6, inProcess: 12, referrerData: { converted: 8, flagged: 2, inProcess: 4 }, refereeData: { converted: 30, flagged: 6, inProcess: 12 } },
       { name: "B.Tech Electrical", converted: 25, leads: 40, cost: 190000, referralPercent: 10.53, referrerIncentive: 8000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 5, inProcess: 10, referrerData: { converted: 7, flagged: 2, inProcess: 3 }, refereeData: { converted: 25, flagged: 5, inProcess: 10 } },
       { name: "M.Tech AI & ML", converted: 35, leads: 52, cost: 160000, referralPercent: 8.75, referrerIncentive: 7000, refereeDiscount: 8, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "PG", flagged: 7, inProcess: 10, referrerData: { converted: 10, flagged: 3, inProcess: 4 }, refereeData: { converted: 35, flagged: 7, inProcess: 10 } },
       { name: "M.Tech Power Systems", converted: 25, leads: 50, cost: 150000, referralPercent: 10.00, referrerIncentive: 6500, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "PG", flagged: 8, inProcess: 17, referrerData: { converted: 6, flagged: 2, inProcess: 5 }, refereeData: { converted: 25, flagged: 8, inProcess: 17 } }
-    ]),
+    ])),
     referrers: [
       { name: "Srishti Sen", count: 18, converted: 12 },
       { name: "Kabir Singh", count: 14, converted: 9 },
@@ -689,12 +731,12 @@ export const initialUniversityData = {
       rewardsPaid: 550000,
       inProgress: 45
     },
-    programs: withPolicyDefaults([
+    programs: withConfigHistory(withPolicyDefaults([
       { name: "B.Tech CSE", converted: 40, leads: 55, cost: 230000, referralPercent: 8.70, referrerIncentive: 10000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 6, inProcess: 9, referrerData: { converted: 10, flagged: 2, inProcess: 3 }, refereeData: { converted: 40, flagged: 6, inProcess: 9 } },
       { name: "B.Tech Mechanical", converted: 35, leads: 50, cost: 200000, referralPercent: 8.00, referrerIncentive: 8000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "UG", flagged: 5, inProcess: 10, referrerData: { converted: 9, flagged: 2, inProcess: 3 }, refereeData: { converted: 35, flagged: 5, inProcess: 10 } },
       { name: "M.Tech Biotechnology", converted: 20, leads: 40, cost: 140000, referralPercent: 10.00, referrerIncentive: 7000, refereeDiscount: 8, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "PG", flagged: 4, inProcess: 16, referrerData: { converted: 5, flagged: 1, inProcess: 4 }, refereeData: { converted: 20, flagged: 4, inProcess: 16 } },
       { name: "PhD Physics", converted: 15, leads: 35, cost: 120000, referralPercent: 8.33, referrerIncentive: 5000, refereeDiscount: 10, effectiveFrom: "01 Jun 2026", effectiveTo: "31 May 2027", type: "PG", flagged: 3, inProcess: 17, referrerData: { converted: 4, flagged: 1, inProcess: 5 }, refereeData: { converted: 15, flagged: 3, inProcess: 17 } }
-    ]),
+    ])),
     referrers: [
       { name: "Meera Nair", count: 15, converted: 10 },
       { name: "Akash Roy", count: 12, converted: 7 },

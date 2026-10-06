@@ -1349,6 +1349,25 @@ button, input, select, textarea {
 .custom-table tr.config-subrow-form td {
   background-color: var(--info-bg);
   color: var(--text-main);
+  vertical-align: top;
+}
+
+.config-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.config-form-hint {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+  min-height: 13px;
+  color: var(--text-muted);
+}
+
+.config-form-hint.error {
+  color: var(--danger-text);
 }
 
 .custom-table tr.config-subrow-footer td {
