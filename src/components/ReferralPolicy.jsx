@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, Save, X, Info, ArrowUpDown, ChevronDown, ChevronRight, Plus, StopCircle } from "lucide-react";
+import { Search, Save, X, Info, ArrowUpDown, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import {
   getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate,
   toIsoDate, fromIsoDate, addDays, startOfToday, coversToday
@@ -16,12 +16,12 @@ const COLUMN_COUNT = 10;
 // always sit on one line.
 const COL = {
   course: { width: '15%' },
-  type: { width: '5%' },
+  type: { width: '6%' },
   cost: { width: '8.5%' },
   referrer: { width: '9.5%' },
   referee: { width: '10.5%' },
   dateFrom: { width: '12%' },
-  dateTo: { width: '16.5%' },
+  dateTo: { width: '15.5%' },
   feeHead: { width: '9%' },
   modified: { width: '7%' },
 };
@@ -347,12 +347,12 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig }) {
                             {isActive && !isAdding && (
                               <button
                                 type="button"
-                                className="action-icon-btn danger"
+                                className="config-stop-btn"
                                 title="Stop this configuration"
                                 aria-label="Stop this configuration"
                                 onClick={() => setStoppingFor(prog)}
                               >
-                                <StopCircle size={14} />
+                                STOP
                               </button>
                             )}
                           </td>
