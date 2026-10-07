@@ -1380,6 +1380,16 @@ button, input, select, textarea {
   font-size: 12px;
 }
 
+.effective-to-cell {
+  white-space: nowrap;
+}
+
+.config-cancelled-tag {
+  color: var(--danger-text);
+  font-weight: 600;
+  font-size: 11px;
+}
+
 .config-btn {
   display: inline-flex;
   align-items: center;
@@ -1449,6 +1459,16 @@ button, input, select, textarea {
 
 .action-icon-btn.save:hover {
   background-color: #d1fae5;
+}
+
+.action-icon-btn.danger {
+  border-color: rgba(220, 38, 38, 0.35);
+  color: var(--danger-text);
+}
+
+.action-icon-btn.danger:hover {
+  background-color: #fff5f5;
+  border-color: var(--danger-text);
 }
 
 /* Stage counters in Reports Table */

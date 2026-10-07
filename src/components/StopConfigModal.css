@@ -1,0 +1,130 @@
+.stop-config-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+}
+
+.stop-config-card {
+  background: #fff;
+  border-radius: 12px;
+  width: 440px;
+  max-width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(226, 223, 241, 0.8);
+}
+
+.stop-config-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e6e9f0;
+}
+
+.stop-config-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2332;
+}
+
+.stop-config-subtitle {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.stop-config-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.stop-config-close:hover {
+  background: #f1f3f6;
+  color: #333;
+}
+
+.stop-config-body {
+  padding: 20px 24px;
+}
+
+.stop-config-warning-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #fff5f5;
+  border: 1.5px solid rgba(220, 38, 38, 0.25);
+}
+
+.stop-config-warning-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.stop-config-warning-panel p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #555;
+}
+
+.stop-config-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 24px 20px;
+}
+
+.stop-config-cancel-btn {
+  padding: 8px 16px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.stop-config-cancel-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.stop-config-confirm-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.stop-config-confirm-btn:hover {
+  background: #b91c1c;
+}

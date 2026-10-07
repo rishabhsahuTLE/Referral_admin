@@ -1,25 +1,29 @@
 import React, { useState } from "react";
-import { Search, Save, X, Info, ArrowUpDown, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Search, Save, X, Info, ArrowUpDown, ChevronDown, ChevronRight, Plus, StopCircle } from "lucide-react";
 import {
   getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate,
-  toIsoDate, fromIsoDate, addDays, startOfToday
+  toIsoDate, fromIsoDate, addDays, startOfToday, coversToday
 } from "../utils/rewardConfigs";
+import StopConfigModal from "./StopConfigModal";
 
 const FEE_HEAD_OPTIONS = ["Tuition Fees", "Examination Fees", "Registration Fee"];
 const COLUMN_COUNT = 10;
 
 // Column widths for the fixed table layout: the table always fits its container (no
 // horizontal scroll) and columns don't reflow when the inline "New configuration"
-// inputs appear inside a course's dropdown.
+// inputs appear inside a course's dropdown. Effective To gets extra room (vs. Effective
+// From) so a cancelled configuration's date plus its red "(Config Cancelled)" tag can
+// always sit on one line.
 const COL = {
   course: { width: '15%' },
-  type: { width: '6%' },
-  cost: { width: '9%' },
-  referrer: { width: '10%' },
-  referee: { width: '11%' },
-  date: { width: '12%' },
-  feeHead: { width: '10%' },
-  modified: { width: '7.5%' },
+  type: { width: '5%' },
+  cost: { width: '8.5%' },
+  referrer: { width: '9.5%' },
+  referee: { width: '10.5%' },
+  dateFrom: { width: '12%' },
+  dateTo: { width: '16.5%' },
+  feeHead: { width: '9%' },
+  modified: { width: '7%' },
 };
 
 // Default Effective From for a new configuration: the day after the last one ends, or —
@@ -32,9 +36,10 @@ function getDefaultFrom(configs) {
   return tomorrow > afterLastStart ? tomorrow : afterLastStart;
 }
 
-export default function ReferralPolicy({ data, onAddConfig }) {
+export default function ReferralPolicy({ data, onAddConfig, onStopConfig }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedCourses, setExpandedCourses] = useState(() => new Set());
+  const [stoppingFor, setStoppingFor] = useState(null);
 
   // Sorting state
   const [sortField, setSortField] = useState("none"); // none, cost, effectiveFrom
@@ -175,7 +180,10 @@ export default function ReferralPolicy({ data, onAddConfig }) {
       <td>{formatCurrency(c.referrerIncentive)}</td>
       <td>{`${c.refereeDiscount}% (${formatCurrency(Math.round((c.cost * c.refereeDiscount) / 100))})`}</td>
       <td>{c.effectiveFrom}</td>
-      <td>{c.effectiveTo ?? "-"}</td>
+      <td className="effective-to-cell">
+        {c.effectiveTo ?? "-"}
+        {c.cancelled && <span className="config-cancelled-tag"> (Config Cancelled)</span>}
+      </td>
       <td>{c.feeHead ?? "-"}</td>
       <td style={{ color: 'var(--text-muted)' }}>{c.lastModifiedBy ?? "-"}</td>
       <td style={{ color: 'var(--text-muted)' }}>{c.lastModifiedOn ?? "-"}</td>
@@ -268,10 +276,10 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                 </th>
                 <th style={COL.referrer}>Referrer Incentive (₹)</th>
                 <th style={COL.referee}>Referee Discount (% of cost)</th>
-                <th onClick={() => handleHeaderClick("effectiveFrom")} style={{ ...COL.date, cursor: 'pointer', userSelect: 'none' }}>
+                <th onClick={() => handleHeaderClick("effectiveFrom")} style={{ ...COL.dateFrom, cursor: 'pointer', userSelect: 'none' }}>
                   Effective From {renderSortIndicator("effectiveFrom")}
                 </th>
-                <th style={COL.date}>
+                <th style={COL.dateTo}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                     Effective To
                     <span title="All referral activity — from the initial referral to the referee's enrollment — must be completed within this date.">
@@ -323,7 +331,7 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                     </tr>
 
                     {isExpanded && configs.map((c, i) => {
-                      const isActive = c === active;
+                      const isActive = c === active && coversToday(c) && !c.cancelled;
                       return (
                         <tr
                           key={`${prog.name}-cfg-${i}`}
@@ -335,7 +343,19 @@ export default function ReferralPolicy({ data, onAddConfig }) {
                               <span className="badge badge-clear" style={{ marginLeft: '6px', fontSize: '9px', padding: '1px 6px' }}>Active</span>
                             )}
                           </td>
-                          <td></td>
+                          <td>
+                            {isActive && !isAdding && (
+                              <button
+                                type="button"
+                                className="action-icon-btn danger"
+                                title="Stop this configuration"
+                                aria-label="Stop this configuration"
+                                onClick={() => setStoppingFor(prog)}
+                              >
+                                <StopCircle size={14} />
+                              </button>
+                            )}
+                          </td>
                           {renderConfigCells(c)}
                         </tr>
                       );
@@ -476,6 +496,14 @@ export default function ReferralPolicy({ data, onAddConfig }) {
         </div>
       </div>
 
+      <StopConfigModal
+        course={stoppingFor}
+        onClose={() => setStoppingFor(null)}
+        onConfirm={() => {
+          onStopConfig(stoppingFor.name);
+          setStoppingFor(null);
+        }}
+      />
     </div>
   );
 }

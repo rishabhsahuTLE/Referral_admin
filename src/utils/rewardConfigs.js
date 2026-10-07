@@ -35,7 +35,7 @@ export const startOfToday = () => {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 };
 
-const CONFIG_FIELDS = ['cost', 'referrerIncentive', 'refereeDiscount', 'effectiveFrom', 'effectiveTo', 'feeHead', 'lastModifiedBy', 'lastModifiedOn'];
+const CONFIG_FIELDS = ['cost', 'referrerIncentive', 'refereeDiscount', 'effectiveFrom', 'effectiveTo', 'feeHead', 'lastModifiedBy', 'lastModifiedOn', 'cancelled'];
 
 export const pickConfigFields = (obj) =>
   Object.fromEntries(CONFIG_FIELDS.map(k => [k, obj[k]]));
@@ -47,14 +47,17 @@ export function getConfigs(prog) {
   return [...configs].sort((a, b) => (parseDisplayDate(a.effectiveFrom)?.getTime() ?? 0) - (parseDisplayDate(b.effectiveFrom)?.getTime() ?? 0));
 }
 
+// Whether a configuration's Effective From/To window covers `on` (default today).
+export function coversToday(c, on = startOfToday()) {
+  const t = on.getTime();
+  const from = parseDisplayDate(c.effectiveFrom);
+  const to = parseDisplayDate(c.effectiveTo);
+  return !!from && from.getTime() <= t && (isOpenEnded(c.effectiveTo) || (to && t <= to.getTime()));
+}
+
 // The configuration whose date range covers `on` (default today); falls back to the one
 // with the latest Effective From when none covers that date.
 export function getActiveConfig(configs, on = startOfToday()) {
-  const t = on.getTime();
-  const active = configs.find(c => {
-    const from = parseDisplayDate(c.effectiveFrom);
-    const to = parseDisplayDate(c.effectiveTo);
-    return from && from.getTime() <= t && (isOpenEnded(c.effectiveTo) || (to && t <= to.getTime()));
-  });
+  const active = configs.find(c => coversToday(c, on));
   return active ?? configs[configs.length - 1];
 }

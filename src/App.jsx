@@ -31,7 +31,7 @@ import Dashboard from "./components/Dashboard";
 import Reports from "./components/Reports";
 import DuplicateLeads from "./components/DuplicateLeads";
 import ReferralPolicy from "./components/ReferralPolicy";
-import { getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate, addDays, pickConfigFields } from "./utils/rewardConfigs";
+import { getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate, addDays, pickConfigFields, coversToday, startOfToday } from "./utils/rewardConfigs";
 import ReferralPayouts from "./components/ReferralPayouts";
 import PaymentHistory from "./components/PaymentHistory";
 
@@ -191,6 +191,42 @@ Approved rewards will be credited to the bank account registered in the student 
         const configs = getConfigs({
           configs: [...existing, { ...newConfig, lastModifiedBy: "Admin User", lastModifiedOn: today }]
         });
+        return { ...prog, configs, ...getActiveConfig(configs) };
+      });
+
+      return {
+        ...prevData,
+        [selectedUni]: {
+          ...prevData[selectedUni],
+          programs: updatedPrograms
+        }
+      };
+    });
+  };
+
+  // Handler to stop a course's currently-live reward configuration early. It's closed as
+  // of today and flagged cancelled, rather than left to run to its originally scheduled
+  // Effective To — leaving a gap until a new configuration is added.
+  const handleStopConfig = (courseName) => {
+    const today = formatDisplayDate(startOfToday());
+    setUniData((prevData) => {
+      const updatedPrograms = prevData[selectedUni].programs.map((prog) => {
+        if (prog.name !== courseName) return prog;
+
+        const existing = getConfigs(prog);
+        const liveIndex = existing.findIndex((c) => coversToday(c));
+        if (liveIndex === -1) return prog;
+
+        const updated = [...existing];
+        updated[liveIndex] = {
+          ...updated[liveIndex],
+          effectiveTo: today,
+          cancelled: true,
+          lastModifiedBy: "Admin User",
+          lastModifiedOn: today,
+        };
+
+        const configs = getConfigs({ configs: updated });
         return { ...prog, configs, ...getActiveConfig(configs) };
       });
 
@@ -392,9 +428,10 @@ Approved rewards will be credited to the bank account registered in the student 
         );
       case "referral_policy":
         return (
-          <ReferralPolicy 
-            data={currentUniData} 
+          <ReferralPolicy
+            data={currentUniData}
             onAddConfig={handleAddConfig}
+            onStopConfig={handleStopConfig}
           />
         );
 
@@ -473,7 +510,7 @@ Approved rewards will be credited to the bank account registered in the student 
                   <Plus size={15} /> Add
                 </button>
               </div>
-              <ReferralPolicy data={currentUniData} onAddConfig={handleAddConfig} />
+              <ReferralPolicy data={currentUniData} onAddConfig={handleAddConfig} onStopConfig={handleStopConfig} />
             </div>
 
             {/* FAQ Management + Terms & Conditions temporarily disabled — guarded with
