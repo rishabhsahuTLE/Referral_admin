@@ -240,6 +240,30 @@ Approved rewards will be credited to the bank account registered in the student 
     });
   };
 
+  // Handler to remove a course's not-yet-started reward configuration. Since its
+  // Effective From hasn't arrived, it never took effect, so it's simply deleted rather
+  // than stopped/closed. Identified by Effective From, which is unique per course — the
+  // no-overlap rule means two configurations can never share a start date.
+  const handleRemoveConfig = (courseName, effectiveFrom) => {
+    setUniData((prevData) => {
+      const updatedPrograms = prevData[selectedUni].programs.map((prog) => {
+        if (prog.name !== courseName) return prog;
+
+        const remaining = getConfigs(prog).filter((c) => c.effectiveFrom !== effectiveFrom);
+        const configs = getConfigs({ configs: remaining });
+        return { ...prog, configs, ...getActiveConfig(configs) };
+      });
+
+      return {
+        ...prevData,
+        [selectedUni]: {
+          ...prevData[selectedUni],
+          programs: updatedPrograms
+        }
+      };
+    });
+  };
+
   // Handlers for the Dashboard's High Volume Referrers card — Flag/Resolve both update the
   // same `reports` record that the Reports tab's Referrer Report reads its Status column
   // from, so the change shows up there too. Remove drops the referrer from the card's own
@@ -432,6 +456,7 @@ Approved rewards will be credited to the bank account registered in the student 
             data={currentUniData}
             onAddConfig={handleAddConfig}
             onStopConfig={handleStopConfig}
+            onRemoveConfig={handleRemoveConfig}
           />
         );
 
@@ -510,7 +535,7 @@ Approved rewards will be credited to the bank account registered in the student 
                   <Plus size={15} /> Add
                 </button>
               </div>
-              <ReferralPolicy data={currentUniData} onAddConfig={handleAddConfig} onStopConfig={handleStopConfig} />
+              <ReferralPolicy data={currentUniData} onAddConfig={handleAddConfig} onStopConfig={handleStopConfig} onRemoveConfig={handleRemoveConfig} />
             </div>
 
             {/* FAQ Management + Terms & Conditions temporarily disabled — guarded with

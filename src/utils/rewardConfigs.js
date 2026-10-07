@@ -61,3 +61,10 @@ export function getActiveConfig(configs, on = startOfToday()) {
   const active = configs.find(c => coversToday(c, on));
   return active ?? configs[configs.length - 1];
 }
+
+// Whether a configuration's Effective From hasn't arrived yet — it hasn't taken effect,
+// so it can simply be removed rather than stopped.
+export function isFuture(c, on = startOfToday()) {
+  const from = parseDisplayDate(c.effectiveFrom);
+  return !!from && from.getTime() > on.getTime();
+}

@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Search, Save, X, Info, ArrowUpDown, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import {
   getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate,
-  toIsoDate, fromIsoDate, addDays, startOfToday, coversToday
+  toIsoDate, fromIsoDate, addDays, startOfToday, coversToday, isFuture
 } from "../utils/rewardConfigs";
-import StopConfigModal from "./StopConfigModal";
+import ConfigActionModal from "./ConfigActionModal";
 
 const FEE_HEAD_OPTIONS = ["Tuition Fees", "Examination Fees", "Registration Fee"];
 const COLUMN_COUNT = 10;
@@ -36,10 +36,10 @@ function getDefaultFrom(configs) {
   return tomorrow > afterLastStart ? tomorrow : afterLastStart;
 }
 
-export default function ReferralPolicy({ data, onAddConfig, onStopConfig }) {
+export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemoveConfig }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedCourses, setExpandedCourses] = useState(() => new Set());
-  const [stoppingFor, setStoppingFor] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null); // { mode: 'stop' | 'remove', course, config }
 
   // Sorting state
   const [sortField, setSortField] = useState("none"); // none, cost, effectiveFrom
@@ -332,6 +332,7 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig }) {
 
                     {isExpanded && configs.map((c, i) => {
                       const isActive = c === active && coversToday(c) && !c.cancelled;
+                      const isPending = isFuture(c);
                       return (
                         <tr
                           key={`${prog.name}-cfg-${i}`}
@@ -347,12 +348,23 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig }) {
                             {isActive && !isAdding && (
                               <button
                                 type="button"
-                                className="config-stop-btn"
+                                className="config-row-action-btn"
                                 title="Stop this configuration"
                                 aria-label="Stop this configuration"
-                                onClick={() => setStoppingFor(prog)}
+                                onClick={() => setConfirmAction({ mode: 'stop', course: prog, config: c })}
                               >
                                 STOP
+                              </button>
+                            )}
+                            {isPending && !isAdding && (
+                              <button
+                                type="button"
+                                className="config-row-action-btn"
+                                title="Remove this configuration — it hasn't started yet"
+                                aria-label="Remove this configuration"
+                                onClick={() => setConfirmAction({ mode: 'remove', course: prog, config: c })}
+                              >
+                                REMOVE
                               </button>
                             )}
                           </td>
@@ -496,12 +508,16 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig }) {
         </div>
       </div>
 
-      <StopConfigModal
-        course={stoppingFor}
-        onClose={() => setStoppingFor(null)}
+      <ConfigActionModal
+        action={confirmAction}
+        onClose={() => setConfirmAction(null)}
         onConfirm={() => {
-          onStopConfig(stoppingFor.name);
-          setStoppingFor(null);
+          if (confirmAction.mode === 'stop') {
+            onStopConfig(confirmAction.course.name);
+          } else {
+            onRemoveConfig(confirmAction.course.name, confirmAction.config.effectiveFrom);
+          }
+          setConfirmAction(null);
         }}
       />
     </div>

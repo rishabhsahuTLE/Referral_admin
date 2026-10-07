@@ -1391,7 +1391,7 @@ button, input, select, textarea {
   font-size: 10px;
 }
 
-.config-stop-btn {
+.config-row-action-btn {
   background: none;
   border: none;
   padding: 2px 4px;
@@ -1403,7 +1403,7 @@ button, input, select, textarea {
   white-space: nowrap;
 }
 
-.config-stop-btn:hover {
+.config-row-action-btn:hover {
   text-decoration: underline;
 }
 
