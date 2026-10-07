@@ -31,7 +31,7 @@ import Dashboard from "./components/Dashboard";
 import Reports from "./components/Reports";
 import DuplicateLeads from "./components/DuplicateLeads";
 import ReferralPolicy from "./components/ReferralPolicy";
-import { getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate, addDays, pickConfigFields, coversToday, startOfToday } from "./utils/rewardConfigs";
+import { getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate, formatDisplayDateTime, endOfDay, addDays, pickConfigFields, coversToday } from "./utils/rewardConfigs";
 import ReferralPayouts from "./components/ReferralPayouts";
 import PaymentHistory from "./components/PaymentHistory";
 
@@ -184,7 +184,7 @@ Approved rewards will be credited to the bank account registered in the student 
         if (isOpenEnded(last.effectiveTo)) {
           existing[existing.length - 1] = {
             ...last,
-            effectiveTo: formatDisplayDate(addDays(parseDisplayDate(newConfig.effectiveFrom), -1))
+            effectiveTo: formatDisplayDateTime(endOfDay(addDays(parseDisplayDate(newConfig.effectiveFrom), -1)))
           };
         }
 
@@ -208,7 +208,9 @@ Approved rewards will be credited to the bank account registered in the student 
   // of today and flagged cancelled, rather than left to run to its originally scheduled
   // Effective To — leaving a gap until a new configuration is added.
   const handleStopConfig = (courseName) => {
-    const today = formatDisplayDate(startOfToday());
+    const now = new Date();
+    const stoppedAt = formatDisplayDateTime(now); // records the exact moment, not just today's date
+    const today = formatDisplayDate(now);
     setUniData((prevData) => {
       const updatedPrograms = prevData[selectedUni].programs.map((prog) => {
         if (prog.name !== courseName) return prog;
@@ -220,7 +222,7 @@ Approved rewards will be credited to the bank account registered in the student 
         const updated = [...existing];
         updated[liveIndex] = {
           ...updated[liveIndex],
-          effectiveTo: today,
+          effectiveTo: stoppedAt,
           cancelled: true,
           lastModifiedBy: "Admin User",
           lastModifiedOn: today,
@@ -390,8 +392,8 @@ Approved rewards will be credited to the bank account registered in the student 
       referralPercent: 0,
       referrerIncentive: parseInt(referrerIncentive, 10) || 0,
       refereeDiscount: parseFloat(refereeDiscount) || 0,
-      effectiveFrom: formatEffectiveDate(effectiveFrom),
-      effectiveTo: formatEffectiveDate(effectiveTo),
+      effectiveFrom: `${formatEffectiveDate(effectiveFrom)}, 00:00`,
+      effectiveTo: `${formatEffectiveDate(effectiveTo)}, 23:59`,
       feeHead,
       lastModifiedBy: "Admin User",
       lastModifiedOn: today,

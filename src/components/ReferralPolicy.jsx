@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Search, Save, X, Info, ArrowUpDown, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import {
-  getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate,
-  toIsoDate, fromIsoDate, addDays, startOfToday, coversToday, isFuture
+  getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDateTime, formatConfigDate,
+  formatTimeOnly, toIsoDate, fromIsoDate, addDays, addMinutes, startOfToday, endOfDay, isMidnight,
+  coversToday, isFuture, minStartOnDate
 } from "../utils/rewardConfigs";
 import ConfigActionModal from "./ConfigActionModal";
 
@@ -12,25 +13,29 @@ const COLUMN_COUNT = 10;
 // Column widths for the fixed table layout: the table always fits its container (no
 // horizontal scroll) and columns don't reflow when the inline "New configuration"
 // inputs appear inside a course's dropdown. Effective To gets extra room (vs. Effective
-// From) so a cancelled configuration's date plus its red "(Config Cancelled)" tag can
-// always sit on one line.
+// From) so a cancelled configuration's date, its recorded stop time, and its red
+// "(Config Cancelled)" tag can always sit on one line.
 const COL = {
-  course: { width: '15%' },
+  course: { width: '14.5%' },
   type: { width: '6%' },
-  cost: { width: '8.5%' },
-  referrer: { width: '9.5%' },
-  referee: { width: '10.5%' },
+  cost: { width: '8%' },
+  referrer: { width: '9%' },
+  referee: { width: '10%' },
   dateFrom: { width: '12%' },
-  dateTo: { width: '15.5%' },
+  dateTo: { width: '18.5%' },
   feeHead: { width: '9%' },
-  modified: { width: '7%' },
+  modified: { width: '6.5%' },
 };
 
-// Default Effective From for a new configuration: the day after the last one ends, or —
-// when the last one is open-ended — tomorrow (but never on/before that config's own start).
+// Default Effective From for a new configuration: the instant right after the last one
+// ends (same calendar day if it ended mid-day, e.g. a same-day Stop — the next day at
+// midnight if it ran through end-of-day), or — when the last one is open-ended —
+// tomorrow (but never on/before that config's own start). Only a date is actually used
+// from this (the exact minute is re-derived from whichever date ends up picked, via
+// minStartOnDate), so this just seeds a sensible starting suggestion.
 function getDefaultFrom(configs) {
   const last = configs[configs.length - 1];
-  if (!isOpenEnded(last.effectiveTo)) return addDays(parseDisplayDate(last.effectiveTo), 1);
+  if (!isOpenEnded(last.effectiveTo)) return addMinutes(parseDisplayDate(last.effectiveTo), 1);
   const tomorrow = addDays(startOfToday(), 1);
   const afterLastStart = addDays(parseDisplayDate(last.effectiveFrom) ?? startOfToday(), 1);
   return tomorrow > afterLastStart ? tomorrow : afterLastStart;
@@ -122,8 +127,13 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
       setAddError("All fields are required.");
       return;
     }
-    const from = fromIsoDate(newFrom);
-    const to = fromIsoDate(newTo);
+    const configs = getConfigs(prog);
+    // Effective From defaults to midnight on the picked date, except when that would
+    // overlap an existing configuration ending later the same day (e.g. right after a
+    // same-day Stop) — then it's the minute right after that configuration ends.
+    // Effective To always runs through end-of-day on the picked date.
+    const from = minStartOnDate(fromIsoDate(newFrom), configs);
+    const to = endOfDay(fromIsoDate(newTo));
     if (to < from) {
       setAddError("Effective To must be on or after Effective From.");
       return;
@@ -131,7 +141,6 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
 
     // Reject any overlap. The open-ended latest config gets closed the day before `from`,
     // so it only conflicts when the new config starts on or before its own start date.
-    const configs = getConfigs(prog);
     const clash = configs.find((c, i) => {
       const cFrom = parseDisplayDate(c.effectiveFrom);
       if (!cFrom) return false;
@@ -142,7 +151,7 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
       return from <= cTo && to >= cFrom;
     });
     if (clash) {
-      setAddError(`Overlaps ${clash.effectiveFrom} – ${isOpenEnded(clash.effectiveTo) ? "open" : clash.effectiveTo}.`);
+      setAddError(`Overlaps ${formatConfigDate(clash.effectiveFrom)} – ${isOpenEnded(clash.effectiveTo) ? "open" : formatConfigDate(clash.effectiveTo)}.`);
       return;
     }
 
@@ -150,8 +159,8 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
       cost: getActiveConfig(configs).cost, // course cost comes from UMS, not editable here
       referrerIncentive: parseFloat(newReferrer) || 0,
       refereeDiscount: parseFloat(newReferee) || 0, // saved as percentage
-      effectiveFrom: formatDisplayDate(from),
-      effectiveTo: formatDisplayDate(to),
+      effectiveFrom: formatDisplayDateTime(from),
+      effectiveTo: formatDisplayDateTime(to),
       feeHead: newFeeHead,
     });
     setAddingFor(null);
@@ -179,9 +188,9 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
       <td>{formatCurrency(c.cost)}</td>
       <td>{formatCurrency(c.referrerIncentive)}</td>
       <td>{`${c.refereeDiscount}% (${formatCurrency(Math.round((c.cost * c.refereeDiscount) / 100))})`}</td>
-      <td>{c.effectiveFrom}</td>
+      <td>{formatConfigDate(c.effectiveFrom)}</td>
       <td className="effective-to-cell">
-        {c.effectiveTo ?? "-"}
+        {formatConfigDate(c.effectiveTo)}
         {c.cancelled && <span className="config-cancelled-tag"> (Config Cancelled)</span>}
       </td>
       <td>{c.feeHead ?? "-"}</td>
@@ -299,6 +308,9 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
                 const isExpanded = expandedCourses.has(prog.name);
                 const isAdding = addingFor === prog.name;
                 const lastConfig = configs[configs.length - 1];
+                // The actual Effective From instant the current date picker value would
+                // save with — computed live so the hint can explain a same-day start time.
+                const candidateFrom = isAdding && newFrom ? minStartOnDate(fromIsoDate(newFrom), configs) : null;
 
                 return (
                   <React.Fragment key={prog.name}>
@@ -443,8 +455,10 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
                             />
                             <span className={`config-form-hint${addError ? ' error' : ''}`}>
                               {addError || (isOpenEnded(lastConfig.effectiveTo)
-                                ? (newFrom ? `Current config will end on ${formatDisplayDate(addDays(fromIsoDate(newFrom), -1))}` : "Pick a start date")
-                                : `Last config ends ${lastConfig.effectiveTo}`)}
+                                ? (newFrom ? `Current config will end on ${formatConfigDate(endOfDay(addDays(fromIsoDate(newFrom), -1)))}` : "Pick a start date")
+                                : (candidateFrom && !isMidnight(candidateFrom)
+                                    ? `Starts at ${formatTimeOnly(candidateFrom)} — right after the previous configuration ends`
+                                    : `Last config ends ${formatConfigDate(lastConfig.effectiveTo)}`))}
                             </span>
                           </div>
                         </td>

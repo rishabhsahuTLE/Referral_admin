@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { AlertTriangle, X } from "lucide-react";
+import { formatConfigDate } from "../utils/rewardConfigs";
 import "./ConfigActionModal.css";
 
 const COPY = {
@@ -53,7 +54,7 @@ export default function ConfigActionModal({ action, onClose, onConfirm }) {
   const copy = COPY[action.mode];
   const subtitle =
     action.mode === "remove"
-      ? `${action.course.name} — ${action.config.effectiveFrom} to ${action.config.effectiveTo ?? "-"}`
+      ? `${action.course.name} — ${formatConfigDate(action.config.effectiveFrom)} to ${formatConfigDate(action.config.effectiveTo)}`
       : action.course.name;
 
   return (
