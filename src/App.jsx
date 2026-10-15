@@ -272,46 +272,46 @@ Approved rewards will be credited to the bank account registered in the student 
   // same `reports` record that the Reports tab's Referrer Report reads its Status column
   // from, so the change shows up there too. Remove drops the referrer from the card's own
   // `referrers` list, which nothing else in the app reads.
-  const handleFlagReferrer = (referrerName) => {
+  const handleFlagReferrer = (referrerName, uniId = selectedUni) => {
     setUniData((prevData) => {
-      const updatedReports = prevData[selectedUni].reports.map((rep) =>
+      const updatedReports = prevData[uniId].reports.map((rep) =>
         rep.student === referrerName ? { ...rep, status: "Flagged" } : rep
       );
 
       return {
         ...prevData,
-        [selectedUni]: {
-          ...prevData[selectedUni],
+        [uniId]: {
+          ...prevData[uniId],
           reports: updatedReports
         }
       };
     });
   };
 
-  const handleResolveReferrer = (referrerName) => {
+  const handleResolveReferrer = (referrerName, uniId = selectedUni) => {
     setUniData((prevData) => {
-      const updatedReports = prevData[selectedUni].reports.map((rep) =>
+      const updatedReports = prevData[uniId].reports.map((rep) =>
         rep.student === referrerName ? { ...rep, status: "Clear" } : rep
       );
 
       return {
         ...prevData,
-        [selectedUni]: {
-          ...prevData[selectedUni],
+        [uniId]: {
+          ...prevData[uniId],
           reports: updatedReports
         }
       };
     });
   };
 
-  const handleRemoveReferrer = (referrerName) => {
+  const handleRemoveReferrer = (referrerName, uniId = selectedUni) => {
     setUniData((prevData) => {
-      const updatedReferrers = prevData[selectedUni].referrers.filter((r) => r.name !== referrerName);
+      const updatedReferrers = prevData[uniId].referrers.filter((r) => r.name !== referrerName);
 
       return {
         ...prevData,
-        [selectedUni]: {
-          ...prevData[selectedUni],
+        [uniId]: {
+          ...prevData[uniId],
           referrers: updatedReferrers
         }
       };
@@ -435,7 +435,10 @@ Approved rewards will be credited to the bank account registered in the student 
       case "dashboard":
         return (
           <Dashboard
-            data={currentUniData}
+            uniData={uniData}
+            payoutRecordsByUni={payoutRecordsByUni}
+            selectedUni={selectedUni}
+            onSelectUni={(id) => { setSelectedUni(id); setActiveDuplicateIndex(0); }}
             setView={setView}
             onNavigateToRefereeReport={navigateToRefereeReportForCourse}
             onFlagReferrer={handleFlagReferrer}

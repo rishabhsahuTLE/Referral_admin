@@ -492,6 +492,8 @@ export function buildInitialPayoutRecords() {
   };
 }
 
+const REFEREE_PAYMENT_TYPES = ["semester", "semester", "yearly", "semester", "lumpsum", "yearly"];
+
 // Builds a full refereeReports array from a university's referrer-aggregate
 // `reports` array, so counts always reconcile: for every referrer, exactly
 // `submitted` referee entries exist, split `converted` Enrolled /
@@ -529,6 +531,9 @@ function generateRefereeReports(reportsList, courseNames, idPrefix) {
         admitted: applicationStatus === "Enrolled" ? 1 : 0,
         paid: applicationStatus === "Enrolled" ? 1 : 0,
         inProcess: applicationStatus === "In Progress" ? 1 : 0,
+        // How the referee chose to pay fees (only known once they've enrolled and paid the
+        // first instalment). Sem-wise is the most common, then Yearly, then Lumpsum.
+        paymentType: applicationStatus === "Enrolled" ? REFEREE_PAYMENT_TYPES[globalIndex % REFEREE_PAYMENT_TYPES.length] : null,
         // Sprinkle in an occasional fraud flag for variety/testing, independent of funnel stage.
         status: globalIndex % 9 === 0 ? "Flagged" : "Clear",
         leadDate: generateLeadDate(globalIndex),
