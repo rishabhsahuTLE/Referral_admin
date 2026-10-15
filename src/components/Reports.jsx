@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Search, Download, TrendingUp } from "lucide-react";
 import { downloadCSV } from "../utils/csv";
+import { getRefereePayment } from "../utils/dashboardMetrics";
+
+const inr = (n) => `₹${Math.round(n).toLocaleString("en-IN")}`;
 
 export default function Reports({ data, initialRefereeCourse, onConsumeDeepLink }) {
   const [activeSubTab, setActiveSubTab] = useState("referrer_report");
@@ -104,19 +107,25 @@ export default function Reports({ data, initialRefereeCourse, onConsumeDeepLink 
 
   // Download whatever is currently previewed in the Referee Report table
   const handleDownloadRefereeReport = () => {
-    const header = ["Referee", "Enrollment No", "Referee Course", "Referrer", "Referrer Course", "Application Status", "Admitted", "Paid", "In Process", "Status"];
-    const rows = filteredRefereeReports.map(rep => [
+    const header = ["Referee", "Enrollment No", "Referee Course", "Referrer", "Referrer Course", "Application Status", "Payment Type", "Referee Discount (₹)", "First Payment Paid (₹)", "Admitted", "Paid", "In Process", "Status"];
+    const rows = filteredRefereeReports.map(rep => {
+      const pay = getRefereePayment(rep, programs);
+      return [
       rep.refereeName,
       rep.refereeEnrollNo,
       rep.refereeCourse,
       rep.referrerName,
       rep.referrerCourse,
       rep.applicationStatus,
+      pay?.paymentTypeLabel ?? "-",
+      pay ? pay.discount : "-",
+      pay ? pay.payable : "-",
       rep.admitted,
       rep.paid,
       rep.inProcess,
       rep.status
-    ]);
+    ];
+    });
     downloadCSV("referee-report.csv", [header, ...rows]);
   };
 
@@ -483,6 +492,7 @@ export default function Reports({ data, initialRefereeCourse, onConsumeDeepLink 
                   <th>Referrer</th>
                   <th>Referrer Course</th>
                   <th>Application Status</th>
+                  <th>Payment Type</th>
                   <th>Stage Breakdown</th>
                   <th>Status</th>
                 </tr>
@@ -527,6 +537,20 @@ export default function Reports({ data, initialRefereeCourse, onConsumeDeepLink 
                       )}
                     </td>
                     <td>
+                      {(() => {
+                        const pay = getRefereePayment(rep, programs);
+                        if (!pay) return <span style={{ color: 'var(--text-muted)' }}>-</span>;
+                        return (
+                          <div title={`${pay.discountPct}% of ${pay.feeHead} on the first payment`}>
+                            <span className="payment-type-chip">{pay.paymentTypeLabel}</span>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', whiteSpace: 'nowrap' }}>
+                              − {inr(pay.discount)} · paid {inr(pay.payable)}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td>
                       <div className="stages-list">
                         <span className="stage-pill stage-admitted">Admitted: {rep.admitted}</span>
                         <span className="stage-pill stage-paid">Paid: {rep.paid}</span>
@@ -544,7 +568,7 @@ export default function Reports({ data, initialRefereeCourse, onConsumeDeepLink 
                 ))}
                 {filteredRefereeReports.length === 0 && (
                   <tr>
-                    <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                    <td colSpan="9" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
                       {selectedRefereeCourse !== "All"
                         ? `No referees found for "${selectedRefereeCourse}"${refereeSearchTerm ? ` matching "${refereeSearchTerm}"` : ""}`
                         : `No referee records found matching "${refereeSearchTerm}"`}

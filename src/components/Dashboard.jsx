@@ -1,16 +1,46 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  TrendingUp,
-  ArrowRight
+  ArrowRight,
+  ChevronDown
 } from "lucide-react";
-import { getMaxRefereeDiscount } from "../utils/feeStructure";
+import DateRangeFilter from "./DateRangeFilter";
+import { computeDashboardMetrics } from "../utils/dashboardMetrics";
 
-export default function Dashboard({ data, setView, onNavigateToRefereeReport, onFlagReferrer, onResolveReferrer, onRemoveReferrer }) {
-  const { stats, programs, referrers, reports } = data;
+export default function Dashboard({ uniData, payoutRecordsByUni, selectedUni, onSelectUni, setView, onNavigateToRefereeReport, onFlagReferrer, onResolveReferrer, onRemoveReferrer }) {
+  // Filters: a specific university (kept in sync with the sidebar selector) or all of
+  // them, and a date range (All Time by default).
+  const [allUnis, setAllUnis] = useState(false);
+  const [dateRange, setDateRange] = useState(null);
+
+  const unis = allUnis ? Object.values(uniData) : [uniData[selectedUni]];
+  const metrics = computeDashboardMetrics(
+    unis.map(uni => ({ uni, payouts: payoutRecordsByUni[uni.id] || [] })),
+    dateRange
+  );
+  const programs = metrics.courses;
+
+  // Referrer-level lists, tagged with their university so Flag/Resolve/Remove act on the
+  // right one when viewing all universities.
+  const referrers = unis
+    .flatMap(uni => (uni.referrers || []).map(r => ({ ...r, uniId: uni.id, uniName: uni.name })))
+    .sort((a, b) => b.count - a.count);
+  const reports = unis.flatMap(uni => (uni.reports || []).map(r => ({ ...r, uniId: uni.id })));
+
+  const periodLabel = dateRange?.startDate
+    ? `${dateRange.startDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} – ${dateRange.endDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
+    : "All time";
+  const scopeLabel = `${allUnis ? "All universities" : uniData[selectedUni].name} · ${periodLabel}`;
+
+  const courseLabel = (c) => allUnis ? `${c.name} (${c.uniName})` : c.name;
+
+  const goToRefereeReport = (c) => {
+    if (c.uniId !== selectedUni) onSelectUni(c.uniId);
+    onNavigateToRefereeReport(c.name);
+  };
 
   // Calculate overall conversion rate
-  const totalConverted = programs.reduce((acc, curr) => acc + curr.converted, 0);
-  const totalLeads = programs.reduce((acc, curr) => acc + curr.leads, 0);
+  const totalConverted = metrics.converted;
+  const totalLeads = metrics.leads;
   const overallConversionRate = totalLeads > 0 ? Math.round((totalConverted / totalLeads) * 100) : 0;
 
   // Format currency
@@ -29,50 +59,43 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
     return [x, y];
   };
 
-  // Calculate total cost of referral across all programmes
-  const calculateTotalReferralCost = () => {
-    let totalReferralCost = 0;
-    let totalCourseRevenue = 0;
-
-    programs.forEach(p => {
-      const referralCostPerConversion = p.referrerIncentive + getMaxRefereeDiscount(p);
-      totalReferralCost += referralCostPerConversion * p.converted;
-      totalCourseRevenue += p.cost * p.converted;
-    });
-
-    return {
-      totalReferralCost,
-      totalCourseRevenue,
-      percentage: totalCourseRevenue > 0 ? (totalReferralCost / totalCourseRevenue * 100).toFixed(1) : 0
-    };
-  };
-
-  const totalReferralData = calculateTotalReferralCost();
-
-  // Render "Cost of Referral" tile
+  // Render "Cost of Referral" tile — based on amounts actually paid: referrer payouts
+  // marked Payment Done + first-payment discounts referees actually got, as a share of
+  // the first-payment fees those referees actually paid.
   const renderReferralCostTile = () => {
-    const courseReferralCosts = programs.map(p => {
-      const referralCostPerConversion = p.referrerIncentive + getMaxRefereeDiscount(p);
-      const totalReferralCost = referralCostPerConversion * p.converted;
-      const totalCourseCost = p.cost * p.converted;
-      const percentage = totalCourseCost > 0 ? (totalReferralCost / totalCourseCost * 100).toFixed(1) : 0;
-      return { name: p.name, referralCost: totalReferralCost, percentage };
-    });
+    const courseReferralCosts = programs.filter(c => c.referralCost > 0 || c.feesCollected > 0);
+    const breakdown = [
+      ["Referrer payouts paid", metrics.payoutsPaid],
+      ["Referee discounts given", metrics.discountsGiven],
+      ["Fees collected (first payment)", metrics.feesCollected],
+    ];
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
         <div style={{ textAlign: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Total Cost of Referral</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--primary)' }}>{totalReferralData.percentage}%</div>
+          <div style={{ fontSize: '32px', fontWeight: '700', color: 'var(--primary)' }}>{metrics.costPercentage}%</div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            ₹{totalReferralData.totalReferralCost.toLocaleString()} / ₹{totalReferralData.totalCourseRevenue.toLocaleString()}
+            {formatCurrency(metrics.referralCost)} / {formatCurrency(metrics.feesCollected)}
           </div>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
+          {breakdown.map(([label, value]) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+              <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+              <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{formatCurrency(value)}</span>
+            </div>
+          ))}
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {courseReferralCosts.map((item, index) => (
-            <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-main)' }}>{item.name}</span>
-              <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--primary)' }}>{item.percentage}%</span>
+          {courseReferralCosts.length === 0 && (
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>No payments in this period</div>
+          )}
+          {courseReferralCosts.map((item) => (
+            <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}
+              title={`Payouts ${formatCurrency(item.payoutsPaid)} + discounts ${formatCurrency(item.discountsGiven)} on ${formatCurrency(item.feesCollected)} collected`}>
+              <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-main)' }}>{courseLabel(item)}</span>
+              <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--primary)' }}>{item.costPercentage}%</span>
             </div>
           ))}
         </div>
@@ -82,11 +105,9 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
 
   // Render "Referral Cost Ratio by Course" pie chart
   const renderReferralCostPieChart = () => {
-    const data = programs.map(p => {
-      const referralCostPerConversion = p.referrerIncentive + getMaxRefereeDiscount(p);
-      const totalReferralCost = referralCostPerConversion * p.converted;
-      return { name: p.name, value: totalReferralCost };
-    }).filter(d => d.value > 0);
+    const data = programs
+      .map(p => ({ ...p, label: courseLabel(p), value: p.referralCost }))
+      .filter(d => d.value > 0);
 
     const totalVal = data.reduce((sum, item) => sum + item.value, 0);
     const colors = ["#514697", "#10b981", "#f59e0b", "#3b82f6", "#ec4899", "#8b5cf6", "#06b6d4"];
@@ -113,7 +134,7 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
                 fill={colors[index % colors.length]}
                 stroke="#ffffff"
                 strokeWidth="0.02"
-                onClick={() => onNavigateToRefereeReport(item.name)}
+                onClick={() => goToRefereeReport(item)}
                 style={{ transition: 'opacity 0.2s ease', cursor: 'pointer' }}
                 onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
                 onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
@@ -126,13 +147,13 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
           {data.map((item, index) => (
             <button
               key={index}
-              onClick={() => onNavigateToRefereeReport(item.name)}
+              onClick={() => goToRefereeReport(item)}
               className="report-link-btn"
               title={`View referees enrolled in ${item.name}`}
               style={{ justifyContent: 'flex-start', gap: '8px', fontSize: '12px' }}
             >
               <span style={{ width: '10px', height: '10px', flexShrink: 0, backgroundColor: colors[index % colors.length], borderRadius: '2px' }}></span>
-              <span style={{ fontWeight: '600' }}>{item.name}</span>
+              <span style={{ fontWeight: '600' }}>{item.label}</span>
               <span>(₹{(item.value / 1000).toFixed(0)}K - {Math.round((item.value / totalVal) * 100)}%)</span>
             </button>
           ))}
@@ -144,28 +165,49 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
+      {/* Filters */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+          Showing <strong style={{ color: 'var(--text-main)' }}>{scopeLabel}</strong>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <select
+              className="search-input"
+              aria-label="Filter by university"
+              style={{ paddingRight: '32px', paddingLeft: '12px', minWidth: '200px', cursor: 'pointer', backgroundColor: '#ffffff' }}
+              value={allUnis ? "__all__" : selectedUni}
+              onChange={(e) => {
+                if (e.target.value === "__all__") { setAllUnis(true); return; }
+                setAllUnis(false);
+                onSelectUni(e.target.value);
+              }}
+            >
+              <option value="__all__">All Universities</option>
+              {Object.values(uniData).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+            <ChevronDown size={14} style={{ position: 'absolute', right: '12px', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+          </div>
+          <DateRangeFilter onDateRangeChange={setDateRange} includeAllTime defaultRange="all-time" />
+        </div>
+      </div>
+
       {/* Top 3 Stat Cards */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-label">Leads Generated</div>
-          <div className="stat-val">{stats.leadsGenerated}</div>
-          <div className="stat-trend trend-up">
-            <TrendingUp size={14} /> {stats.leadsGrowth}
-          </div>
+          <div className="stat-val">{metrics.leads}</div>
+          <div className="stat-trend" style={{ color: 'var(--text-muted)' }}>{periodLabel}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Admissions Converted</div>
-          <div className="stat-val">{stats.admissionsConverted}</div>
-          <div className="stat-trend trend-up">
-            <TrendingUp size={14} /> {stats.conversionsGrowth}
-          </div>
+          <div className="stat-val">{metrics.converted}</div>
+          <div className="stat-trend" style={{ color: 'var(--text-muted)' }}>{periodLabel}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Drop-offs</div>
-          <div className="stat-val">{stats.dropOffs}</div>
-          <div className="stat-trend trend-up" style={{ color: 'var(--danger)' }}>
-            <TrendingUp size={14} /> {stats.dropOffsGrowth}
-          </div>
+          <div className="stat-val">{metrics.dropOffs}</div>
+          <div className="stat-trend" style={{ color: 'var(--text-muted)' }}>{periodLabel}</div>
         </div>
       </div>
 
@@ -183,6 +225,9 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
           </div>
           <div className="card-body">
             <div className="program-conversion-list">
+              {programs.length === 0 && (
+                <div style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '24px' }}>No courses</div>
+              )}
               {programs.map((prog, idx) => {
                 const rate = prog.leads > 0 ? Math.round((prog.converted / prog.leads) * 100) : 0;
                 // Assign a color based on rate
@@ -192,7 +237,7 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
 
                 return (
                   <div key={idx} className="program-conversion-row">
-                    <div className="prog-name" title={prog.name}>{prog.name}</div>
+                    <div className="prog-name" title={courseLabel(prog)}>{courseLabel(prog)}</div>
                     <div className="prog-progress-container">
                       <div 
                         className="prog-progress-bar" 
@@ -234,18 +279,19 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div className="referrer-list" style={{ flexGrow: 1 }}>
               {referrers.slice(0, 4).map((ref) => {
-                const referrerReport = reports.find(r => r.student === ref.name);
+                const referrerReport = reports.find(r => r.student === ref.name && r.uniId === ref.uniId);
                 const isFlagged = referrerReport?.status === 'Flagged';
                 return (
-                  <div key={ref.name} className="referrer-row">
+                  <div key={`${ref.uniId}-${ref.name}`} className="referrer-row">
                     <div>
                       <div className="referrer-name">{ref.name}</div>
+                      {allUnis && <div className="referrer-count">{ref.uniName}</div>}
                       <div className="referrer-count">{ref.count} referrals ({ref.converted} converted)</div>
                     </div>
                     {isFlagged ? (
                       <button
                         className="resolve-btn"
-                        onClick={() => onResolveReferrer(ref.name)}
+                        onClick={() => onResolveReferrer(ref.name, ref.uniId)}
                       >
                         Resolve
                       </button>
@@ -253,13 +299,13 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
                       <div className="referrer-actions">
                         <button
                           className="resolve-btn"
-                          onClick={() => onFlagReferrer(ref.name)}
+                          onClick={() => onFlagReferrer(ref.name, ref.uniId)}
                         >
                           Flag
                         </button>
                         <button
                           className="remove-btn"
-                          onClick={() => onRemoveReferrer(ref.name)}
+                          onClick={() => onRemoveReferrer(ref.name, ref.uniId)}
                         >
                           Remove
                         </button>

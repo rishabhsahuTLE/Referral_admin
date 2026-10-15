@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Search } from 'lucide-react';
 import ComprehensiveReportModal from './ComprehensiveReportModal';
 import './ComprehensiveReport.css';
 
@@ -28,14 +29,39 @@ function sumStats(stats) {
 
 export default function ComprehensiveReport({ uniData, payoutRecords }) {
   const [popup, setPopup] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const universities = Object.values(uniData);
+  // Search matches a university name (shows all of its courses) or a course name (shows
+  // just the matching courses); universities with nothing matching are hidden. A
+  // university's total row sums only the courses shown.
+  const query = searchTerm.trim().toLowerCase();
+  const universities = Object.values(uniData)
+    .map((uni) => {
+      const all = computeCourseStats(uni);
+      const stats = !query || uni.name.toLowerCase().includes(query)
+        ? all
+        : all.filter((s) => s.course.toLowerCase().includes(query));
+      return { uni, stats };
+    })
+    .filter(({ stats }) => stats.length > 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <h2 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
-        Comprehensive Report
-      </h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
+          Comprehensive Report
+        </h2>
+        <div className="search-bar-container" style={{ marginBottom: 0 }}>
+          <Search size={16} className="search-icon" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search university or course..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
 
       <div className="table-container">
         <table className="custom-table">
@@ -48,15 +74,14 @@ export default function ComprehensiveReport({ uniData, payoutRecords }) {
             </tr>
           </thead>
           <tbody>
-            {universities.map((uni) => {
-              const stats = computeCourseStats(uni);
+            {universities.map(({ uni, stats }) => {
               const totals = sumStats(stats);
               return (
                 <React.Fragment key={uni.id}>
                   <tr className="cr-total-row">
                     <td>{uni.name} · {stats.length} Course{stats.length !== 1 ? 's' : ''}</td>
                     <td>
-                      <button className="report-link-btn" onClick={() => setPopup({ uni, courseName: null, column: 'leads' })}>
+                      <button className="report-link-btn" onClick={() => setPopup({ uni, courseName: null, courseNames: query ? stats.map((st) => st.course) : null, column: 'leads' })}>
                         {totals.leads}
                       </button>
                     </td>
@@ -64,7 +89,7 @@ export default function ComprehensiveReport({ uniData, payoutRecords }) {
                       <button
                         className="report-link-btn"
                         style={{ backgroundColor: 'var(--success-bg)', color: 'var(--success-text)' }}
-                        onClick={() => setPopup({ uni, courseName: null, column: 'converted' })}
+                        onClick={() => setPopup({ uni, courseName: null, courseNames: query ? stats.map((st) => st.course) : null, column: 'converted' })}
                       >
                         {totals.converted}
                       </button>
@@ -73,7 +98,7 @@ export default function ComprehensiveReport({ uniData, payoutRecords }) {
                       <button
                         className="report-link-btn"
                         style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)' }}
-                        onClick={() => setPopup({ uni, courseName: null, column: 'dropOff' })}
+                        onClick={() => setPopup({ uni, courseName: null, courseNames: query ? stats.map((st) => st.course) : null, column: 'dropOff' })}
                       >
                         {totals.dropOff}
                       </button>
@@ -110,6 +135,13 @@ export default function ComprehensiveReport({ uniData, payoutRecords }) {
                 </React.Fragment>
               );
             })}
+            {universities.length === 0 && (
+              <tr>
+                <td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                  No universities or courses match "{searchTerm}"
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
