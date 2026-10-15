@@ -31,6 +31,7 @@ import Dashboard from "./components/Dashboard";
 import Reports from "./components/Reports";
 import DuplicateLeads from "./components/DuplicateLeads";
 import ReferralPolicy from "./components/ReferralPolicy";
+import { PAYMENT_TYPES, computeFirstPayments } from "./utils/feeStructure";
 import { getConfigs, getActiveConfig, isOpenEnded, parseDisplayDate, formatDisplayDate, formatDisplayDateTime, endOfDay, addDays, pickConfigFields, coversToday } from "./utils/rewardConfigs";
 import ReferralPayouts from "./components/ReferralPayouts";
 import PaymentHistory from "./components/PaymentHistory";
@@ -64,6 +65,7 @@ export default function App() {
   const [effectiveFrom, setEffectiveFrom] = useState("");
   const [effectiveTo, setEffectiveTo] = useState("");
   const [feeHead, setFeeHead] = useState("Tuition Fees");
+  const [paymentTypes, setPaymentTypes] = useState(["semester"]);
   const [addProgramError, setAddProgramError] = useState("");
 
   // Referral Payouts — lifted here (instead of local to ReferralPayouts) so Payment
@@ -361,6 +363,7 @@ Approved rewards will be credited to the bank account registered in the student 
     setEffectiveFrom("");
     setEffectiveTo("");
     setFeeHead("Tuition Fees");
+    setPaymentTypes(["semester"]);
     setAddProgramError("");
   };
 
@@ -382,6 +385,10 @@ Approved rewards will be credited to the bank account registered in the student 
       setAddProgramError("All fields are required, including at least one course.");
       return;
     }
+    if (paymentTypes.length === 0) {
+      setAddProgramError("Select at least one payment type.");
+      return;
+    }
 
     const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -395,6 +402,7 @@ Approved rewards will be credited to the bank account registered in the student 
       effectiveFrom: `${formatEffectiveDate(effectiveFrom)}, 00:00`,
       effectiveTo: `${formatEffectiveDate(effectiveTo)}, 23:59`,
       feeHead,
+      paymentTypes,
       lastModifiedBy: "Admin User",
       lastModifiedOn: today,
       converted: 0,
@@ -1932,7 +1940,7 @@ Approved rewards will be credited to the bank account registered in the student 
               {/* Referee Discount */}
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
-                  Referee Discount (% of cost)
+                  Referee Discount (% of fee head)
                 </label>
                 <input
                   type="number"
@@ -1971,6 +1979,64 @@ Approved rewards will be credited to the bank account registered in the student 
                   <option value="Registration Fee">Registration Fee</option>
                 </select>
               </div>
+
+              {/* Payment Type */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>
+                  Payment Type (discount applies to the first payment only)
+                </label>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                  {PAYMENT_TYPES.map(p => (
+                    <label key={p.key} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={paymentTypes.includes(p.key)}
+                        onChange={() => setPaymentTypes(prev =>
+                          prev.includes(p.key) ? prev.filter(k => k !== p.key) : PAYMENT_TYPES.map(x => x.key).filter(k => k === p.key || prev.includes(k))
+                        )}
+                      />
+                      {p.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* First-payment discount preview per selected course */}
+              {selectedCourses.length > 0 && (
+                <div style={{ border: '1.5px solid #eee', borderRadius: '8px', overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                    <thead>
+                      <tr style={{ background: '#f8f9fb', color: '#666' }}>
+                        <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600 }}>Discount / Payable</th>
+                        {PAYMENT_TYPES.map(p => (
+                          <th key={p.key} style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 600 }}>{p.firstPayment}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedCourses.map(c => {
+                        const fps = computeFirstPayments(
+                          { name: c.name, type: programType, cost: c.cost },
+                          { cost: c.cost, refereeDiscount: parseFloat(refereeDiscount) || 0, feeHead, paymentTypes }
+                        );
+                        return (
+                          <tr key={c.name} style={{ borderTop: '1px solid #eee' }}>
+                            <td style={{ padding: '6px 10px' }}>{c.name}</td>
+                            {PAYMENT_TYPES.map(p => (
+                              <td key={p.key} style={{ textAlign: 'right', padding: '6px 10px', opacity: fps[p.key].selected ? 1 : 0.5 }}>
+                                <div style={{ fontWeight: 600, color: fps[p.key].discount > 0 ? 'var(--success-text)' : 'inherit' }}>
+                                  {fps[p.key].discount > 0 ? '− ' : ''}₹{fps[p.key].discount.toLocaleString('en-IN')}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#666' }}>₹{fps[p.key].payable.toLocaleString('en-IN')}</div>
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Effective From */}
               <div>
