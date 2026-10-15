@@ -5,25 +5,28 @@ import {
   formatTimeOnly, toIsoDate, fromIsoDate, addDays, addMinutes, startOfToday, endOfDay, isMidnight,
   coversToday, isFuture, minStartOnDate
 } from "../utils/rewardConfigs";
+import {
+  FEE_HEAD_OPTIONS, PAYMENT_TYPES, getPaymentTypes, getFeeStructure, computeFirstPayments
+} from "../utils/feeStructure";
 import ConfigActionModal from "./ConfigActionModal";
 
-const FEE_HEAD_OPTIONS = ["Tuition Fees", "Examination Fees", "Registration Fee"];
-const COLUMN_COUNT = 10;
+const COLUMN_COUNT = 13;
 
 // Column widths for the fixed table layout: the table always fits its container (no
 // horizontal scroll) and columns don't reflow when the inline "New configuration"
-// inputs appear inside a course's dropdown. Effective To gets extra room (vs. Effective
-// From) so a cancelled configuration's date, its recorded stop time, and its red
-// "(Config Cancelled)" tag can always sit on one line.
+// inputs appear inside a course's dropdown. The three First Payment columns show, per
+// payment type, the referee discount and what's left payable on that first payment.
 const COL = {
-  course: { width: '14.5%' },
-  type: { width: '6%' },
-  cost: { width: '8%' },
-  referrer: { width: '9%' },
-  referee: { width: '10%' },
-  dateFrom: { width: '12%' },
-  dateTo: { width: '18.5%' },
-  feeHead: { width: '9%' },
+  course: { width: '10.5%' },
+  type: { width: '5%' },
+  cost: { width: '7%' },
+  referrer: { width: '7%' },
+  paymentType: { width: '7.5%' },
+  feeHead: { width: '7.5%' },
+  referee: { width: '6.5%' },
+  firstPayment: { width: '8.5%' },
+  dateFrom: { width: '8%' },
+  dateTo: { width: '9.5%' },
   modified: { width: '6.5%' },
 };
 
@@ -57,7 +60,11 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
   const [newFrom, setNewFrom] = useState("");
   const [newTo, setNewTo] = useState("");
   const [newFeeHead, setNewFeeHead] = useState(FEE_HEAD_OPTIONS[0]);
+  const [newPaymentTypes, setNewPaymentTypes] = useState([]);
   const [addError, setAddError] = useState("");
+
+  // Courses whose semester-wise fee structure panel is open
+  const [feeStructureOpen, setFeeStructureOpen] = useState(() => new Set());
 
   const { programs } = data;
 
@@ -96,6 +103,19 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
     }).format(amount);
   };
 
+  const toggleFeeStructure = (name) => {
+    setFeeStructureOpen(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
+
+  const togglePaymentType = (key) => {
+    setNewPaymentTypes(prev => prev.includes(key) ? prev.filter(k => k !== key) : PAYMENT_TYPES.map(p => p.key).filter(k => k === key || prev.includes(k)));
+    setAddError("");
+  };
+
   const toggleExpanded = (name) => {
     setExpandedCourses(prev => {
       const next = new Set(prev);
@@ -114,6 +134,7 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
     setNewFrom(toIsoDate(getDefaultFrom(configs)));
     setNewTo("");
     setNewFeeHead(active.feeHead && FEE_HEAD_OPTIONS.includes(active.feeHead) ? active.feeHead : FEE_HEAD_OPTIONS[0]);
+    setNewPaymentTypes(getPaymentTypes(active));
     setAddError("");
   };
 
@@ -125,6 +146,10 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
   const saveAdd = (prog) => {
     if (newReferrer === "" || newReferee === "" || !newFrom || !newTo) {
       setAddError("All fields are required.");
+      return;
+    }
+    if (newPaymentTypes.length === 0) {
+      setAddError("Select at least one payment type.");
       return;
     }
     const configs = getConfigs(prog);
@@ -158,10 +183,11 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
     onAddConfig(prog.name, {
       cost: getActiveConfig(configs).cost, // course cost comes from UMS, not editable here
       referrerIncentive: parseFloat(newReferrer) || 0,
-      refereeDiscount: parseFloat(newReferee) || 0, // saved as percentage
+      refereeDiscount: parseFloat(newReferee) || 0, // saved as % of the fee head
       effectiveFrom: formatDisplayDateTime(from),
       effectiveTo: formatDisplayDateTime(to),
       feeHead: newFeeHead,
+      paymentTypes: newPaymentTypes,
     });
     setAddingFor(null);
     setAddError("");
@@ -182,22 +208,88 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
     return sortOrder === "asc" ? " ▲" : " ▼";
   };
 
-  // Read-only cells for one configuration (cost → last modified on)
-  const renderConfigCells = (c) => (
+  // One First Payment cell: the referee discount on that payment type's first payment
+  // (₹0 when the type isn't enabled) and what remains payable after it.
+  const renderFirstPaymentCell = (fp, typeLabel, feeHead, pct) => (
+    <td key={typeLabel}>
+      <div
+        className={`first-payment-cell${fp.selected ? '' : ' not-selected'}`}
+        title={fp.selected
+          ? `${typeLabel} first payment ${formatCurrency(fp.gross)}\n${feeHead} in it: ${formatCurrency(fp.feeHeadAmount)} × ${pct}% = ${formatCurrency(fp.discount)} discount\nPayable: ${formatCurrency(fp.payable)}`
+          : `${typeLabel} isn't enabled on this configuration — no discount.\nPayable: ${formatCurrency(fp.payable)}`}
+      >
+        <span className="fp-discount">{fp.discount > 0 ? `− ${formatCurrency(fp.discount)}` : formatCurrency(0)}</span>
+        <span className="fp-payable">{formatCurrency(fp.payable)}</span>
+      </div>
+    </td>
+  );
+
+  const renderFirstPaymentCells = (prog, c) => {
+    const fps = computeFirstPayments(prog, c);
+    return PAYMENT_TYPES.map(({ key, firstPayment }) =>
+      renderFirstPaymentCell(fps[key], firstPayment, c.feeHead ?? FEE_HEAD_OPTIONS[0], parseFloat(c.refereeDiscount) || 0)
+    );
+  };
+
+  const renderPaymentTypeChips = (types) => (
+    <div className="payment-type-chips">
+      {PAYMENT_TYPES.filter(p => types.includes(p.key)).map(p => (
+        <span key={p.key} className="payment-type-chip">{p.label}</span>
+      ))}
+    </div>
+  );
+
+  // Read-only cells for one configuration (cost → config added)
+  const renderConfigCells = (prog, c) => (
     <>
       <td>{formatCurrency(c.cost)}</td>
       <td>{formatCurrency(c.referrerIncentive)}</td>
-      <td>{`${c.refereeDiscount}% (${formatCurrency(Math.round((c.cost * c.refereeDiscount) / 100))})`}</td>
+      <td>{renderPaymentTypeChips(getPaymentTypes(c))}</td>
+      <td>{c.feeHead ?? "-"}</td>
+      <td>{`${c.refereeDiscount}%`}</td>
+      {renderFirstPaymentCells(prog, c)}
       <td>{formatConfigDate(c.effectiveFrom)}</td>
       <td className="effective-to-cell">
         {formatConfigDate(c.effectiveTo)}
-        {c.cancelled && <span className="config-cancelled-tag"> (Config Cancelled)</span>}
+        {c.cancelled && <span className="config-cancelled-tag">(Config Cancelled)</span>}
       </td>
-      <td>{c.feeHead ?? "-"}</td>
-      <td style={{ color: 'var(--text-muted)' }}>{c.lastModifiedBy ?? "-"}</td>
-      <td style={{ color: 'var(--text-muted)' }}>{c.lastModifiedOn ?? "-"}</td>
+      <td style={{ color: 'var(--text-muted)' }}>
+        {c.lastModifiedBy ?? "-"}
+        <span style={{ display: 'block', fontSize: '10px' }}>{c.lastModifiedOn ?? ""}</span>
+      </td>
     </>
   );
+
+  // Semester × fee head breakdown for a course at a given cost
+  const renderFeeStructure = (prog, cost) => {
+    const structure = getFeeStructure(prog, cost);
+    const headTotals = FEE_HEAD_OPTIONS.map(fh => structure.reduce((a, s) => a + (s.heads[fh] ?? 0), 0));
+    return (
+      <table className="fee-structure-table">
+        <thead>
+          <tr>
+            <th>Fee Head</th>
+            {structure.map(s => <th key={s.semester}>Sem {s.semester}</th>)}
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {FEE_HEAD_OPTIONS.map((fh, i) => (
+            <tr key={fh}>
+              <td>{fh}</td>
+              {structure.map(s => <td key={s.semester}>{formatCurrency(s.heads[fh] ?? 0)}</td>)}
+              <td>{formatCurrency(headTotals[i])}</td>
+            </tr>
+          ))}
+          <tr className="fee-structure-total">
+            <td>Semester Total</td>
+            {structure.map(s => <td key={s.semester}>{formatCurrency(s.total)}</td>)}
+            <td>{formatCurrency(structure.reduce((a, s) => a + s.total, 0))}</td>
+          </tr>
+        </tbody>
+      </table>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -206,7 +298,7 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
       <div className="policy-banner">
         <Info className="policy-icon" size={18} />
         <div>
-          <strong>Reward Settings Control.</strong> Expand a course to see all of its reward configurations, and use + to add a new dated configuration (date ranges cannot overlap). Click column headers or use the sort dropdown to organize records by cost or effective dates.
+          <strong>Reward Settings Control.</strong> Expand a course to see all of its reward configurations, and use + to add a new dated configuration (date ranges cannot overlap). The referee discount is a % of the selected fee head and is applied only to the referee's first payment — Semester 1 (Sem-wise), Year 1 (Yearly) or the full course fee (Lumpsum); payment types not enabled get ₹0. Click column headers or use the sort dropdown to organize records by cost or effective dates.
         </div>
       </div>
 
@@ -276,19 +368,29 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
           <table className="custom-table reward-master-table">
             <thead>
               <tr>
-                <th style={COL.course}>Course</th>
-                <th style={COL.type}>Type</th>
+                <th rowSpan={2} style={COL.course}>Course</th>
+                <th rowSpan={2} style={COL.type}>Type</th>
 
                 {/* Clickable sort headers */}
-                <th onClick={() => handleHeaderClick("cost")} style={{ ...COL.cost, cursor: 'pointer', userSelect: 'none' }}>
+                <th rowSpan={2} onClick={() => handleHeaderClick("cost")} style={{ ...COL.cost, cursor: 'pointer', userSelect: 'none' }}>
                   Course Cost {renderSortIndicator("cost")}
                 </th>
-                <th style={COL.referrer}>Referrer Incentive (₹)</th>
-                <th style={COL.referee}>Referee Discount (% of cost)</th>
-                <th onClick={() => handleHeaderClick("effectiveFrom")} style={{ ...COL.dateFrom, cursor: 'pointer', userSelect: 'none' }}>
+                <th rowSpan={2} style={COL.referrer}>Referrer Incentive (₹)</th>
+                <th rowSpan={2} style={COL.paymentType}>Payment Type</th>
+                <th rowSpan={2} style={COL.feeHead}>Discount Fee Head</th>
+                <th rowSpan={2} style={COL.referee}>Discount % (of fee head)</th>
+                <th colSpan={3} className="first-payment-group-header">
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    First Payment — Discount / Payable
+                    <span title="The referee discount applies only to the first payment. Top: discount (₹0 if the payment type isn't enabled). Bottom: amount payable after the discount.">
+                      <Info size={12} style={{ opacity: 0.6, cursor: 'help' }} />
+                    </span>
+                  </span>
+                </th>
+                <th rowSpan={2} onClick={() => handleHeaderClick("effectiveFrom")} style={{ ...COL.dateFrom, cursor: 'pointer', userSelect: 'none' }}>
                   Effective From {renderSortIndicator("effectiveFrom")}
                 </th>
-                <th style={COL.dateTo}>
+                <th rowSpan={2} style={COL.dateTo}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                     Effective To
                     <span title="All referral activity — from the initial referral to the referee's enrollment — must be completed within this date.">
@@ -296,9 +398,12 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
                     </span>
                   </span>
                 </th>
-                <th style={COL.feeHead}>Fee Head</th>
-                <th style={COL.modified}>Config Added By</th>
-                <th style={COL.modified}>Config Added On</th>
+                <th rowSpan={2} style={COL.modified}>Config Added</th>
+              </tr>
+              <tr>
+                {PAYMENT_TYPES.map(p => (
+                  <th key={p.key} style={COL.firstPayment} className="first-payment-sub-header">{p.firstPayment}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -339,7 +444,7 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
                           {prog.type}
                         </span>
                       </td>
-                      {renderConfigCells(active)}
+                      {renderConfigCells(prog, active)}
                     </tr>
 
                     {isExpanded && configs.map((c, i) => {
@@ -380,15 +485,29 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
                               </button>
                             )}
                           </td>
-                          {renderConfigCells(c)}
+                          {renderConfigCells(prog, c)}
                         </tr>
                       );
                     })}
 
+                    {isExpanded && feeStructureOpen.has(prog.name) && (
+                      <tr className="config-subrow config-subrow-fee-structure">
+                        <td colSpan={COLUMN_COUNT}>
+                          <div className="fee-structure-title">
+                            Semester-wise fee structure — {prog.name} ({formatCurrency(active.cost)}, from UMS)
+                          </div>
+                          {renderFeeStructure(prog, active.cost)}
+                        </td>
+                      </tr>
+                    )}
+
                     {isExpanded && !isAdding && (
                       <tr className="config-subrow config-subrow-footer">
                         <td colSpan={COLUMN_COUNT}>
-                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <button type="button" className="config-btn" onClick={() => toggleFeeStructure(prog.name)}>
+                              {feeStructureOpen.has(prog.name) ? "Hide Fee Structure" : "View Fee Structure"}
+                            </button>
                             <button type="button" className="config-btn config-btn-primary" onClick={() => startAdd(prog)}>
                               <Plus size={12} /> Add New Configuration
                             </button>
@@ -425,6 +544,36 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
                         </td>
                         <td>
                           <div className="config-form-field">
+                            <div className="payment-type-options">
+                              {PAYMENT_TYPES.map(p => (
+                                <label key={p.key} className="payment-type-option">
+                                  <input
+                                    type="checkbox"
+                                    checked={newPaymentTypes.includes(p.key)}
+                                    onChange={() => togglePaymentType(p.key)}
+                                  />
+                                  {p.label}
+                                </label>
+                              ))}
+                            </div>
+                            <span className="config-form-hint"></span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="config-form-field">
+                            <select
+                              className="inline-edit-input"
+                              value={newFeeHead}
+                              onChange={(e) => setNewFeeHead(e.target.value)}
+                              style={{ width: '100%', cursor: 'pointer' }}
+                            >
+                              {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
+                            </select>
+                            <span className="config-form-hint"></span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="config-form-field">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <input
                                 type="number"
@@ -439,11 +588,15 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
                               />
                               <span style={{ fontSize: '11px', fontWeight: '600' }}>%</span>
                             </div>
-                            <span className="config-form-hint">
-                              ({formatCurrency(Math.round((active.cost * (parseFloat(newReferee || 0)) / 100)))})
-                            </span>
+                            <span className="config-form-hint">of {newFeeHead}</span>
                           </div>
                         </td>
+                        {renderFirstPaymentCells(prog, {
+                          cost: active.cost,
+                          refereeDiscount: parseFloat(newReferee) || 0,
+                          feeHead: newFeeHead,
+                          paymentTypes: newPaymentTypes,
+                        })}
                         <td>
                           <div className="config-form-field">
                             <input
@@ -475,20 +628,6 @@ export default function ReferralPolicy({ data, onAddConfig, onStopConfig, onRemo
                             <span className="config-form-hint"></span>
                           </div>
                         </td>
-                        <td>
-                          <div className="config-form-field">
-                            <select
-                              className="inline-edit-input"
-                              value={newFeeHead}
-                              onChange={(e) => setNewFeeHead(e.target.value)}
-                              style={{ width: '100%', cursor: 'pointer' }}
-                            >
-                              {FEE_HEAD_OPTIONS.map(fh => <option key={fh} value={fh}>{fh}</option>)}
-                            </select>
-                            <span className="config-form-hint"></span>
-                          </div>
-                        </td>
-                        <td></td>
                         <td></td>
                       </tr>
                     )}

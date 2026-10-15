@@ -3,6 +3,7 @@ import {
   TrendingUp,
   ArrowRight
 } from "lucide-react";
+import { getMaxRefereeDiscount } from "../utils/feeStructure";
 
 export default function Dashboard({ data, setView, onNavigateToRefereeReport, onFlagReferrer, onResolveReferrer, onRemoveReferrer }) {
   const { stats, programs, referrers, reports } = data;
@@ -34,7 +35,7 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
     let totalCourseRevenue = 0;
 
     programs.forEach(p => {
-      const referralCostPerConversion = p.referrerIncentive + (p.cost * p.refereeDiscount / 100);
+      const referralCostPerConversion = p.referrerIncentive + getMaxRefereeDiscount(p);
       totalReferralCost += referralCostPerConversion * p.converted;
       totalCourseRevenue += p.cost * p.converted;
     });
@@ -51,7 +52,7 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
   // Render "Cost of Referral" tile
   const renderReferralCostTile = () => {
     const courseReferralCosts = programs.map(p => {
-      const referralCostPerConversion = p.referrerIncentive + (p.cost * p.refereeDiscount / 100);
+      const referralCostPerConversion = p.referrerIncentive + getMaxRefereeDiscount(p);
       const totalReferralCost = referralCostPerConversion * p.converted;
       const totalCourseCost = p.cost * p.converted;
       const percentage = totalCourseCost > 0 ? (totalReferralCost / totalCourseCost * 100).toFixed(1) : 0;
@@ -82,7 +83,7 @@ export default function Dashboard({ data, setView, onNavigateToRefereeReport, on
   // Render "Referral Cost Ratio by Course" pie chart
   const renderReferralCostPieChart = () => {
     const data = programs.map(p => {
-      const referralCostPerConversion = p.referrerIncentive + (p.cost * p.refereeDiscount / 100);
+      const referralCostPerConversion = p.referrerIncentive + getMaxRefereeDiscount(p);
       const totalReferralCost = referralCostPerConversion * p.converted;
       return { name: p.name, value: totalReferralCost };
     }).filter(d => d.value > 0);
