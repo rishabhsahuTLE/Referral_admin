@@ -98,12 +98,13 @@ export const COURSE_COST_MAP = {
   "PhD Chemistry": 125000,
 };
 
-// Fills in the newer Reward Master columns (effective-to, fee head, last-modified audit
+// Fills in the newer Reward Master columns (effective-to, fee head, payment types, last-modified audit
 // trail) for programs that predate those fields, without having to hand-edit every entry.
 function withPolicyDefaults(programs) {
   return programs.map((p) => ({
     effectiveTo: "-",
     feeHead: "Tuition Fees",
+    paymentTypes: ["semester", "yearly", "lumpsum"],
     lastModifiedBy: "-",
     lastModifiedOn: "-",
     ...p,
@@ -125,6 +126,7 @@ function withConfigHistory(programs) {
       effectiveFrom: `${p.effectiveFrom}, 00:00`,
       effectiveTo: `${p.effectiveTo}, 23:59`,
       feeHead: p.feeHead,
+      paymentTypes: p.paymentTypes,
       lastModifiedBy: "Admin User",
       lastModifiedOn: "20 May 2026",
     };
@@ -135,6 +137,7 @@ function withConfigHistory(programs) {
       effectiveFrom: "15 Jun 2025, 00:00",
       effectiveTo: "31 May 2026, 23:59",
       feeHead: p.feeHead,
+      paymentTypes: ["semester", "yearly"],
       lastModifiedBy: "Admin User",
       lastModifiedOn: "10 Jun 2025",
     };
@@ -145,6 +148,7 @@ function withConfigHistory(programs) {
       effectiveFrom: "01 Jun 2024, 00:00",
       effectiveTo: "31 May 2025, 23:59",
       feeHead: p.feeHead,
+      paymentTypes: ["semester"],
       lastModifiedBy: "Admin User",
       lastModifiedOn: "25 May 2024",
     };
@@ -488,6 +492,8 @@ export function buildInitialPayoutRecords() {
   };
 }
 
+const REFEREE_PAYMENT_TYPES = ["semester", "semester", "yearly", "semester", "lumpsum", "yearly"];
+
 // Builds a full refereeReports array from a university's referrer-aggregate
 // `reports` array, so counts always reconcile: for every referrer, exactly
 // `submitted` referee entries exist, split `converted` Enrolled /
@@ -525,6 +531,9 @@ function generateRefereeReports(reportsList, courseNames, idPrefix) {
         admitted: applicationStatus === "Enrolled" ? 1 : 0,
         paid: applicationStatus === "Enrolled" ? 1 : 0,
         inProcess: applicationStatus === "In Progress" ? 1 : 0,
+        // How the referee chose to pay fees (only known once they've enrolled and paid the
+        // first instalment). Sem-wise is the most common, then Yearly, then Lumpsum.
+        paymentType: applicationStatus === "Enrolled" ? REFEREE_PAYMENT_TYPES[globalIndex % REFEREE_PAYMENT_TYPES.length] : null,
         // Sprinkle in an occasional fraud flag for variety/testing, independent of funnel stage.
         status: globalIndex % 9 === 0 ? "Flagged" : "Clear",
         leadDate: generateLeadDate(globalIndex),

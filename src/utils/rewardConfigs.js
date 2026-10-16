@@ -68,7 +68,7 @@ export const startOfToday = () => {
 
 export const endOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59);
 
-const CONFIG_FIELDS = ['cost', 'referrerIncentive', 'refereeDiscount', 'effectiveFrom', 'effectiveTo', 'feeHead', 'lastModifiedBy', 'lastModifiedOn', 'cancelled'];
+const CONFIG_FIELDS = ['cost', 'referrerIncentive', 'refereeDiscount', 'effectiveFrom', 'effectiveTo', 'feeHead', 'paymentTypes', 'lastModifiedBy', 'lastModifiedOn', 'cancelled'];
 
 export const pickConfigFields = (obj) =>
   Object.fromEntries(CONFIG_FIELDS.map(k => [k, obj[k]]));

@@ -48,10 +48,12 @@ function formatDate(d) {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function DateRangeFilter({ onDateRangeChange }) {
+// `includeAllTime` adds an "All Time" preset (no date bounds); `defaultRange` sets which
+// preset the button shows initially (the parent's own initial state should match it).
+function DateRangeFilter({ onDateRangeChange, includeAllTime = false, defaultRange = 'last-month' }) {
   const today = new Date();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedRange, setSelectedRange] = useState('last-month');
+  const [selectedRange, setSelectedRange] = useState(defaultRange);
 
   // Calendar state
   const [calYear, setCalYear] = useState(today.getFullYear());
@@ -88,6 +90,8 @@ function DateRangeFilter({ onDateRangeChange }) {
     const t = new Date();
     t.setHours(0, 0, 0, 0);
     switch (range) {
+      case 'all-time':
+        return { label: 'All Time', startDate: null, endDate: null };
       case 'last-month':
         return {
           label: 'Last Month',
@@ -221,7 +225,7 @@ function DateRangeFilter({ onDateRangeChange }) {
             {/* Presets */}
             <div className="preset-ranges">
               <h4>Quick Select</h4>
-              {['last-month', 'last-3-months', 'last-6-months', 'last-year'].map((r) => (
+              {[...(includeAllTime ? ['all-time'] : []), 'last-month', 'last-3-months', 'last-6-months', 'last-year'].map((r) => (
                 <button
                   key={r}
                   className={`preset-btn ${selectedRange === r ? 'active' : ''}`}
